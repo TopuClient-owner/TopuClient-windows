@@ -14,6 +14,7 @@ namespace TopuLauncher
         private static readonly object ProfessionalUiRegistration = RegisterProfessionalUi();
         private bool _professionalUiApplied;
         private WrapPanel? _profileCards;
+        private Button? _addProfileButton;
         private Button? _editProfileButton;
         private Border? _profileTools;
         private Border? _profileSettingsCard;
@@ -78,23 +79,61 @@ namespace TopuLauncher
             DependencyObject? scroll = VisualTreeHelper.GetParent(TabLaunch);
             if (scroll is not ScrollViewer scrollViewer) return;
             if (VisualTreeHelper.GetParent(scrollViewer) is not Grid bodyGrid) return;
-            if (bodyGrid.RowDefinitions.Count > 0) return;
 
             bodyGrid.ColumnDefinitions.Clear();
             bodyGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            bodyGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(64) });
+            bodyGrid.RowDefinitions.Clear();
+            bodyGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(58) });
             bodyGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+
             Border? oldSidebar = bodyGrid.Children.OfType<Border>().FirstOrDefault(x => x.Child is Grid);
             if (oldSidebar != null) oldSidebar.Visibility = Visibility.Collapsed;
+
             Grid.SetColumn(scrollViewer, 0);
             Grid.SetRow(scrollViewer, 1);
             scrollViewer.Margin = new Thickness(0);
 
-            StackPanel nav = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(28, 0, 0, 0) };
-            Border navBorder = new Border { Background = new LinearGradientBrush(Color.FromRgb(17, 21, 27), Color.FromRgb(11, 14, 18), new Point(0, 0), new Point(1, 0)), BorderBrush = new SolidColorBrush(Color.FromRgb(36, 42, 49)), BorderThickness = new Thickness(0, 0, 0, 1), Child = nav };
-            Grid.SetRow(navBorder, 0); Grid.SetColumn(navBorder, 0); bodyGrid.Children.Add(navBorder);
-            MoveButtonToNav(TabLaunchBtn, nav); MoveButtonToNav(TabProfilesBtn, nav); MoveButtonToNav(TabAccountsBtn, nav);
-            foreach (Button b in new[] { TabLaunchBtn, TabProfilesBtn, TabAccountsBtn }) { b.Width = 150; b.Height = 40; b.Margin = new Thickness(0, 0, 8, 0); b.HorizontalContentAlignment = HorizontalAlignment.Center; b.Padding = new Thickness(12, 0, 12, 0); b.BorderThickness = new Thickness(0); }
+            StackPanel nav = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(30, 0, 0, 0)
+            };
+
+            Border navBorder = new Border
+            {
+                Background = new LinearGradientBrush(Color.FromRgb(17, 21, 27), Color.FromRgb(11, 14, 18), new Point(0, 0), new Point(1, 0)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(36, 42, 49)),
+                BorderThickness = new Thickness(0, 0, 0, 1),
+                Child = nav
+            };
+            Grid.SetRow(navBorder, 0);
+            Grid.SetColumn(navBorder, 0);
+            bodyGrid.Children.Add(navBorder);
+
+            MoveButtonToNav(TabLaunchBtn, nav);
+            MoveButtonToNav(TabProfilesBtn, nav);
+            MoveButtonToNav(TabAccountsBtn, nav);
+
+            // Clean top navigation: exactly Launch / Profile / Accounts.
+            TabLaunchBtn.Content = "Launch";
+            TabProfilesBtn.Content = "Profile";
+            TabAccountsBtn.Content = "Accounts";
+
+            foreach (Button b in new[] { TabLaunchBtn, TabProfilesBtn, TabAccountsBtn })
+            {
+                b.Width = 118;
+                b.Height = 38;
+                b.Margin = new Thickness(0, 0, 4, 0);
+                b.HorizontalContentAlignment = HorizontalAlignment.Center;
+                b.VerticalContentAlignment = VerticalAlignment.Center;
+                b.Padding = new Thickness(12, 0, 12, 0);
+                b.BorderThickness = new Thickness(0);
+                b.Background = Brushes.Transparent;
+                b.Foreground = b == TabLaunchBtn ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(145, 153, 163));
+                b.FontSize = 13;
+            }
         }
 
         private static void MoveButtonToNav(Button button, Panel nav)
@@ -121,7 +160,9 @@ namespace TopuLauncher
             {
                 string name = item?.ToString() ?? "default";
                 Button card = new Button { Content = BuildProfileCardContent(name), Width = 150, Height = 94, Margin = new Thickness(0, 0, 10, 10), Padding = new Thickness(14), Background = new SolidColorBrush(Color.FromRgb(20, 24, 29)), BorderBrush = new SolidColorBrush(Color.FromRgb(43, 49, 57)), BorderThickness = new Thickness(1), Tag = name, Cursor = Cursors.Hand, HorizontalContentAlignment = HorizontalAlignment.Left, VerticalContentAlignment = VerticalAlignment.Center };
-                card.Template = CreateCardButtonTemplate(); card.Click += ProfileCard_Click; _profileCards.Children.Add(card);
+                card.Template = CreateCardButtonTemplate();
+                card.Click += ProfileCard_Click;
+                _profileCards.Children.Add(card);
             }
             UpdateProfileCardSelection();
         }
@@ -144,12 +185,24 @@ namespace TopuLauncher
             border.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(Control.BorderThicknessProperty));
             border.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Control.PaddingProperty));
             FrameworkElementFactory content = new FrameworkElementFactory(typeof(ContentPresenter));
-            content.SetValue(ContentPresenter.ContentSourceProperty, "Content"); content.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Left); content.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
-            border.AppendChild(content); return new ControlTemplate(typeof(Button)) { VisualTree = border };
+            content.SetValue(ContentPresenter.ContentSourceProperty, "Content");
+            content.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Left);
+            content.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+            border.AppendChild(content);
+            return new ControlTemplate(typeof(Button)) { VisualTree = border };
         }
 
-        private void ProfileCard_Click(object sender, RoutedEventArgs e) { if (sender is Button button && button.Tag is string profile && ProfileSelector != null) ProfileSelector.SelectedItem = profile; }
-        private void ModernProfileSelectionChanged(object? sender, SelectionChangedEventArgs e) { RebuildProfileCards(); LockRuntimeSelectorsForInstalledProfile(); }
+        private void ProfileCard_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string profile && ProfileSelector != null)
+                ProfileSelector.SelectedItem = profile;
+        }
+
+        private void ModernProfileSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            RebuildProfileCards();
+            LockRuntimeSelectorsForInstalledProfile();
+        }
 
         private void UpdateProfileCardSelection()
         {
@@ -169,35 +222,120 @@ namespace TopuLauncher
             if (TabProfiles == null || _profileTools != null) return;
             _profileSettingsCard = FindProfileSettingsCard();
             if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Collapsed;
-            _profileTools = new Border { Background = new SolidColorBrush(Color.FromRgb(17, 21, 26)), BorderBrush = new SolidColorBrush(Color.FromRgb(42, 48, 56)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Padding = new Thickness(16), Margin = new Thickness(0, 0, 0, 14) };
+
+            _profileTools = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(17, 21, 26)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(42, 48, 56)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(14),
+                Padding = new Thickness(16),
+                Margin = new Thickness(0, 0, 0, 14)
+            };
+
             StackPanel tools = new StackPanel { Orientation = Orientation.Horizontal };
-            _editProfileButton = MakeToolButton("Edit", true); _editProfileButton.Click += EditProfile_Click; tools.Children.Add(_editProfileButton);
-            tools.Children.Add(MakeToolButton("Add Mod", false, AddModTool_Click)); tools.Children.Add(MakeToolButton("Add Modpack", false, AddModpackTool_Click)); tools.Children.Add(MakeToolButton("Open Game Directory", false, OpenGameDirectoryTool_Click));
-            _profileTools.Child = tools; TabProfiles.Children.Insert(Math.Min(3, TabProfiles.Children.Count), _profileTools);
+            _addProfileButton = MakeToolButton("Add Profile", true);
+            _addProfileButton.Click += AddProfile_Click;
+            tools.Children.Add(_addProfileButton);
+
+            _editProfileButton = MakeToolButton("Edit", false);
+            _editProfileButton.Click += EditProfile_Click;
+            tools.Children.Add(_editProfileButton);
+            tools.Children.Add(MakeToolButton("Add Mod", false, AddModTool_Click));
+            tools.Children.Add(MakeToolButton("Add Modpack", false, AddModpackTool_Click));
+            tools.Children.Add(MakeToolButton("Open Game Directory", false, OpenGameDirectoryTool_Click));
+
+            _profileTools.Child = tools;
+            TabProfiles.Children.Insert(Math.Min(3, TabProfiles.Children.Count), _profileTools);
         }
 
-        private Border? FindProfileSettingsCard() => FindVisualChildren<Border>(TabProfiles).FirstOrDefault(b => FindVisualChildren<TextBlock>(b).Any(t => t.Text == "PROFILE SETTINGS"));
+        private Border? FindProfileSettingsCard() => FindVisualChildren<Border>(TabProfiles).FirstOrDefault(b => FindVisualChildren<TextBlock>(b).Any(t => string.Equals(t.Text, "PROFILE SETTINGS", StringComparison.OrdinalIgnoreCase)));
 
         private static Button MakeToolButton(string text, bool primary, RoutedEventHandler? handler = null)
         {
-            Button b = new Button { Content = text, Height = 36, Padding = new Thickness(16, 0, 16, 0), Margin = new Thickness(0, 0, 8, 0), Background = primary ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(31, 37, 44)), Foreground = primary ? new SolidColorBrush(Color.FromRgb(4, 16, 10)) : Brushes.White, BorderBrush = primary ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(55, 63, 72)), BorderThickness = new Thickness(1), FontWeight = FontWeights.SemiBold, Cursor = Cursors.Hand };
-            b.Template = CreateCardButtonTemplate(); if (handler != null) b.Click += handler; return b;
+            Button b = new Button
+            {
+                Content = text,
+                Height = 36,
+                Padding = new Thickness(16, 0, 16, 0),
+                Margin = new Thickness(0, 0, 8, 0),
+                Background = primary ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(31, 37, 44)),
+                Foreground = primary ? new SolidColorBrush(Color.FromRgb(4, 16, 10)) : Brushes.White,
+                BorderBrush = primary ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(55, 63, 72)),
+                BorderThickness = new Thickness(1),
+                FontWeight = FontWeights.SemiBold,
+                Cursor = Cursors.Hand
+            };
+            b.Template = CreateCardButtonTemplate();
+            if (handler != null) b.Click += handler;
+            return b;
+        }
+
+        private void ShowProfileEditor(string title, string status)
+        {
+            if (_profileSettingsCard == null) return;
+            TextBlock? heading = FindVisualChildren<TextBlock>(_profileSettingsCard).FirstOrDefault(t => string.Equals(t.Text, "PROFILE SETTINGS", StringComparison.OrdinalIgnoreCase));
+            if (heading != null) heading.Text = title;
+            _profileSettingsCard.Visibility = Visibility.Visible;
+            NewProfileInput?.Focus();
+            StatusText.Text = status;
+        }
+
+        private void AddProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (NewProfileInput != null) NewProfileInput.Text = "";
+            if (VersionBox != null && VersionBox.Items.Count > 0 && VersionBox.SelectedIndex < 0) VersionBox.SelectedIndex = 0;
+            ShowProfileEditor("CREATE PROFILE", "Choose a profile name, Minecraft version and RAM, then press Create Profile.");
         }
 
         private void EditProfile_Click(object sender, RoutedEventArgs e)
         {
             if (_profileSettingsCard == null) return;
-            _profileSettingsCard.Visibility = _profileSettingsCard.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-            StatusText.Text = _profileSettingsCard.Visibility == Visibility.Visible ? "Profile settings opened." : "Profile settings closed.";
+            if (_profileSettingsCard.Visibility == Visibility.Visible)
+            {
+                _profileSettingsCard.Visibility = Visibility.Collapsed;
+                StatusText.Text = "Profile editor closed.";
+                return;
+            }
+            ShowProfileEditor("EDIT PROFILE", "Edit the active profile's RAM and compatible settings.");
         }
-        private void AddModTool_Click(object sender, RoutedEventArgs e) { if (ModSearchInput != null) { ModSearchInput.Focus(); if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Visible; } StatusText.Text = "Enter a mod name and use Search & Add."; }
-        private void AddModpackTool_Click(object sender, RoutedEventArgs e) { if (ModSearchInput != null) { ModSearchInput.Focus(); if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Visible; } StatusText.Text = "Use the profile's Modrinth area to add compatible content to this instance."; }
+
+        private void AddModTool_Click(object sender, RoutedEventArgs e)
+        {
+            if (ModSearchInput != null)
+            {
+                ModSearchInput.Focus();
+                if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Visible;
+            }
+            StatusText.Text = "Enter a mod name and use Search & Add.";
+        }
+
+        private void AddModpackTool_Click(object sender, RoutedEventArgs e)
+        {
+            if (ModSearchInput != null)
+            {
+                ModSearchInput.Focus();
+                if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Visible;
+            }
+            StatusText.Text = "Use the profile's Modrinth area to add compatible content to this instance.";
+        }
+
         private void OpenGameDirectoryTool_Click(object sender, RoutedEventArgs e)
         {
-            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = _gamePath, UseShellExecute = true }); StatusText.Text = "Opened the active profile directory."; }
-            catch (Exception ex) { StatusText.Text = "Could not open the profile directory."; WriteException("OPEN PROFILE DIRECTORY ERROR", ex); }
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = _gamePath, UseShellExecute = true });
+                StatusText.Text = "Opened the active profile directory.";
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = "Could not open the profile directory.";
+                WriteException("OPEN PROFILE DIRECTORY ERROR", ex);
+            }
         }
+
         private void RefreshRuntimeLockAfterLaunch(object? sender, RoutedEventArgs e) => Dispatcher.BeginInvoke(new Action(LockRuntimeSelectorsForInstalledProfile));
+
         private void LockRuntimeSelectorsForInstalledProfile()
         {
             if (VersionBox == null || ProfileSelector == null) return;
