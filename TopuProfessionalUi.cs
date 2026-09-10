@@ -9,8 +9,6 @@ using System.Windows.Media.Effects;
 
 namespace TopuLauncher
 {
-    // Modern runtime layout layer. Keeps the existing launcher logic and named controls intact,
-    // but replaces the old sidebar presentation with a compact top navigation and modern profile cards.
     public partial class MainWindow
     {
         private static readonly object ProfessionalUiRegistration = RegisterProfessionalUi();
@@ -28,15 +26,13 @@ namespace TopuLauncher
 
         private static void ProfessionalUiLoaded(object sender, RoutedEventArgs e)
         {
-            if (sender is MainWindow window)
-                window.Dispatcher.BeginInvoke(new Action(window.ApplyProfessionalUi));
+            if (sender is MainWindow window) window.Dispatcher.BeginInvoke(new Action(window.ApplyProfessionalUi));
         }
 
         private void ApplyProfessionalUi()
         {
             if (_professionalUiApplied) return;
             _professionalUiApplied = true;
-
             MinWidth = Math.Max(MinWidth, 1050);
             MinHeight = Math.Max(MinHeight, 700);
             Width = Math.Max(Width, 1240);
@@ -44,7 +40,6 @@ namespace TopuLauncher
             FontFamily = new FontFamily("Segoe UI");
             UseLayoutRounding = true;
             SnapsToDevicePixels = true;
-
             StyleExistingShell();
             BuildTopNavigation();
             BuildModernProfileCards();
@@ -57,12 +52,7 @@ namespace TopuLauncher
         {
             foreach (Border border in FindVisualChildren<Border>(this))
             {
-                if (border.CornerRadius.TopLeft >= 10)
-                {
-                    border.SnapsToDevicePixels = true;
-                    border.UseLayoutRounding = true;
-                }
-
+                if (border.CornerRadius.TopLeft >= 10) { border.SnapsToDevicePixels = true; border.UseLayoutRounding = true; }
                 if (border.Background is SolidColorBrush brush)
                 {
                     Color c = brush.Color;
@@ -74,99 +64,51 @@ namespace TopuLauncher
                     }
                 }
             }
-
             StyleNavigationButton(TabLaunchBtn);
             StyleNavigationButton(TabProfilesBtn);
             StyleNavigationButton(TabAccountsBtn);
-
-            if (LaunchBtn != null)
-            {
-                LaunchBtn.Effect = SoftShadow(22, 0.42);
-                LaunchBtn.MouseEnter += ProfessionalLaunchMouseEnter;
-                LaunchBtn.MouseLeave += ProfessionalLaunchMouseLeave;
-            }
-
+            if (LaunchBtn != null) { LaunchBtn.Effect = SoftShadow(22, 0.42); LaunchBtn.MouseEnter += ProfessionalLaunchMouseEnter; LaunchBtn.MouseLeave += ProfessionalLaunchMouseLeave; }
             foreach (Button button in FindVisualChildren<Button>(this))
-            {
-                if (button == LaunchBtn || button == TabLaunchBtn || button == TabProfilesBtn || button == TabAccountsBtn) continue;
-                AddButtonMotion(button);
-            }
+                if (button != LaunchBtn && button != TabLaunchBtn && button != TabProfilesBtn && button != TabAccountsBtn) AddButtonMotion(button);
         }
 
         private void BuildTopNavigation()
         {
             if (TabLaunchBtn == null || TabProfilesBtn == null || TabAccountsBtn == null) return;
-
             DependencyObject? scroll = VisualTreeHelper.GetParent(TabLaunch);
             if (scroll is not ScrollViewer scrollViewer) return;
             if (VisualTreeHelper.GetParent(scrollViewer) is not Grid bodyGrid) return;
-            if (VisualTreeHelper.GetParent(bodyGrid) is not Grid rootGrid) return;
             if (bodyGrid.RowDefinitions.Count > 0) return;
 
             bodyGrid.ColumnDefinitions.Clear();
             bodyGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             bodyGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(64) });
             bodyGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-
-            Border? oldSidebar = bodyGrid.Children.OfType<Border>().FirstOrDefault(x => x != scrollViewer && x.Child is Grid);
+            Border? oldSidebar = bodyGrid.Children.OfType<Border>().FirstOrDefault(x => x.Child is Grid);
             if (oldSidebar != null) oldSidebar.Visibility = Visibility.Collapsed;
-
             Grid.SetColumn(scrollViewer, 0);
             Grid.SetRow(scrollViewer, 1);
             scrollViewer.Margin = new Thickness(0);
 
             StackPanel nav = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(28, 0, 0, 0) };
-            Border navBorder = new Border
-            {
-                Background = new LinearGradientBrush(Color.FromRgb(17, 21, 27), Color.FromRgb(11, 14, 18), new Point(0, 0), new Point(1, 0)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(36, 42, 49)),
-                BorderThickness = new Thickness(0, 0, 0, 1),
-                Child = nav
-            };
-            Grid.SetRow(navBorder, 0);
-            Grid.SetColumn(navBorder, 0);
-            bodyGrid.Children.Add(navBorder);
-
-            MoveButtonToNav(TabLaunchBtn, nav);
-            MoveButtonToNav(TabProfilesBtn, nav);
-            MoveButtonToNav(TabAccountsBtn, nav);
-
-            foreach (Button b in new[] { TabLaunchBtn, TabProfilesBtn, TabAccountsBtn })
-            {
-                b.Width = 150;
-                b.Height = 40;
-                b.Margin = new Thickness(0, 0, 8, 0);
-                b.HorizontalContentAlignment = HorizontalAlignment.Center;
-                b.Padding = new Thickness(12, 0, 12, 0);
-                b.BorderThickness = new Thickness(0);
-            }
-
-            rootGrid.UpdateLayout();
+            Border navBorder = new Border { Background = new LinearGradientBrush(Color.FromRgb(17, 21, 27), Color.FromRgb(11, 14, 18), new Point(0, 0), new Point(1, 0)), BorderBrush = new SolidColorBrush(Color.FromRgb(36, 42, 49)), BorderThickness = new Thickness(0, 0, 0, 1), Child = nav };
+            Grid.SetRow(navBorder, 0); Grid.SetColumn(navBorder, 0); bodyGrid.Children.Add(navBorder);
+            MoveButtonToNav(TabLaunchBtn, nav); MoveButtonToNav(TabProfilesBtn, nav); MoveButtonToNav(TabAccountsBtn, nav);
+            foreach (Button b in new[] { TabLaunchBtn, TabProfilesBtn, TabAccountsBtn }) { b.Width = 150; b.Height = 40; b.Margin = new Thickness(0, 0, 8, 0); b.HorizontalContentAlignment = HorizontalAlignment.Center; b.Padding = new Thickness(12, 0, 12, 0); b.BorderThickness = new Thickness(0); }
         }
 
         private static void MoveButtonToNav(Button button, Panel nav)
         {
-            if (button.Parent is Panel oldParent)
-                oldParent.Children.Remove(button);
+            if (button.Parent is Panel oldParent) oldParent.Children.Remove(button);
             nav.Children.Add(button);
         }
 
         private void BuildModernProfileCards()
         {
             if (ProfileSelector == null || TabProfiles == null || _profileCards != null) return;
-
             ProfileSelector.Visibility = Visibility.Collapsed;
-            _profileCards = new WrapPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(0, 10, 0, 6)
-            };
-
-            int insert = Math.Min(2, TabProfiles.Children.Count);
-            TabProfiles.Children.Insert(insert, _profileCards);
-
+            _profileCards = new WrapPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 10, 0, 6) };
+            TabProfiles.Children.Insert(Math.Min(2, TabProfiles.Children.Count), _profileCards);
             ProfileSelector.SelectionChanged += ModernProfileSelectionChanged;
             RebuildProfileCards();
         }
@@ -175,30 +117,12 @@ namespace TopuLauncher
         {
             if (_profileCards == null || ProfileSelector == null) return;
             _profileCards.Children.Clear();
-
             foreach (object item in ProfileSelector.Items)
             {
                 string name = item?.ToString() ?? "default";
-                Button card = new Button
-                {
-                    Content = BuildProfileCardContent(name),
-                    Width = 150,
-                    Height = 94,
-                    Margin = new Thickness(0, 0, 10, 10),
-                    Padding = new Thickness(14),
-                    Background = new SolidColorBrush(Color.FromRgb(20, 24, 29)),
-                    BorderBrush = new SolidColorBrush(Color.FromRgb(43, 49, 57)),
-                    BorderThickness = new Thickness(1),
-                    Tag = name,
-                    Cursor = Cursors.Hand,
-                    HorizontalContentAlignment = HorizontalAlignment.Left,
-                    VerticalContentAlignment = VerticalAlignment.Center
-                };
-                card.Template = CreateCardButtonTemplate();
-                card.Click += ProfileCard_Click;
-                _profileCards.Children.Add(card);
+                Button card = new Button { Content = BuildProfileCardContent(name), Width = 150, Height = 94, Margin = new Thickness(0, 0, 10, 10), Padding = new Thickness(14), Background = new SolidColorBrush(Color.FromRgb(20, 24, 29)), BorderBrush = new SolidColorBrush(Color.FromRgb(43, 49, 57)), BorderThickness = new Thickness(1), Tag = name, Cursor = Cursors.Hand, HorizontalContentAlignment = HorizontalAlignment.Left, VerticalContentAlignment = VerticalAlignment.Center };
+                card.Template = CreateCardButtonTemplate(); card.Click += ProfileCard_Click; _profileCards.Children.Add(card);
             }
-
             UpdateProfileCardSelection();
         }
 
@@ -220,24 +144,12 @@ namespace TopuLauncher
             border.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(Control.BorderThicknessProperty));
             border.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Control.PaddingProperty));
             FrameworkElementFactory content = new FrameworkElementFactory(typeof(ContentPresenter));
-            content.SetValue(ContentPresenter.ContentSourceProperty, "Content");
-            content.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Left);
-            content.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
-            border.AppendChild(content);
-            return new ControlTemplate(typeof(Button)) { VisualTree = border };
+            content.SetValue(ContentPresenter.ContentSourceProperty, "Content"); content.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Left); content.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+            border.AppendChild(content); return new ControlTemplate(typeof(Button)) { VisualTree = border };
         }
 
-        private void ProfileCard_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.Tag is string profile && ProfileSelector != null)
-                ProfileSelector.SelectedItem = profile;
-        }
-
-        private void ModernProfileSelectionChanged(object? sender, SelectionChangedEventArgs e)
-        {
-            RebuildProfileCards();
-            LockRuntimeSelectorsForInstalledProfile();
-        }
+        private void ProfileCard_Click(object sender, RoutedEventArgs e) { if (sender is Button button && button.Tag is string profile && ProfileSelector != null) ProfileSelector.SelectedItem = profile; }
+        private void ModernProfileSelectionChanged(object? sender, SelectionChangedEventArgs e) { RebuildProfileCards(); LockRuntimeSelectorsForInstalledProfile(); }
 
         private void UpdateProfileCardSelection()
         {
@@ -255,55 +167,21 @@ namespace TopuLauncher
         private void BuildProfileTools()
         {
             if (TabProfiles == null || _profileTools != null) return;
-
             _profileSettingsCard = FindProfileSettingsCard();
             if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Collapsed;
-
-            _profileTools = new Border
-            {
-                Background = new SolidColorBrush(Color.FromRgb(17, 21, 26)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(42, 48, 56)),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(14),
-                Padding = new Thickness(16),
-                Margin = new Thickness(0, 0, 0, 14)
-            };
+            _profileTools = new Border { Background = new SolidColorBrush(Color.FromRgb(17, 21, 26)), BorderBrush = new SolidColorBrush(Color.FromRgb(42, 48, 56)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Padding = new Thickness(16), Margin = new Thickness(0, 0, 0, 14) };
             StackPanel tools = new StackPanel { Orientation = Orientation.Horizontal };
-            _editProfileButton = MakeToolButton("Edit", true);
-            _editProfileButton.Click += EditProfile_Click;
-            tools.Children.Add(_editProfileButton);
-            tools.Children.Add(MakeToolButton("Add Mod", false, AddModTool_Click));
-            tools.Children.Add(MakeToolButton("Add Modpack", false, AddModpackTool_Click));
-            tools.Children.Add(MakeToolButton("Open Game Directory", false, OpenGameDirectoryTool_Click));
-            _profileTools.Child = tools;
-
-            int insert = Math.Min(3, TabProfiles.Children.Count);
-            TabProfiles.Children.Insert(insert, _profileTools);
+            _editProfileButton = MakeToolButton("Edit", true); _editProfileButton.Click += EditProfile_Click; tools.Children.Add(_editProfileButton);
+            tools.Children.Add(MakeToolButton("Add Mod", false, AddModTool_Click)); tools.Children.Add(MakeToolButton("Add Modpack", false, AddModpackTool_Click)); tools.Children.Add(MakeToolButton("Open Game Directory", false, OpenGameDirectoryTool_Click));
+            _profileTools.Child = tools; TabProfiles.Children.Insert(Math.Min(3, TabProfiles.Children.Count), _profileTools);
         }
 
-        private Border? FindProfileSettingsCard()
-        {
-            return FindVisualChildren<Border>(TabProfiles).FirstOrDefault(b => FindVisualChildren<TextBlock>(b).Any(t => t.Text == "PROFILE SETTINGS"));
-        }
+        private Border? FindProfileSettingsCard() => FindVisualChildren<Border>(TabProfiles).FirstOrDefault(b => FindVisualChildren<TextBlock>(b).Any(t => t.Text == "PROFILE SETTINGS"));
 
         private static Button MakeToolButton(string text, bool primary, RoutedEventHandler? handler = null)
         {
-            Button b = new Button
-            {
-                Content = text,
-                Height = 36,
-                Padding = new Thickness(16, 0, 16, 0),
-                Margin = new Thickness(0, 0, 8, 0),
-                Background = primary ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(31, 37, 44)),
-                Foreground = primary ? new SolidColorBrush(Color.FromRgb(4, 16, 10)) : Brushes.White,
-                BorderBrush = primary ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(55, 63, 72)),
-                BorderThickness = new Thickness(1),
-                FontWeight = FontWeights.SemiBold,
-                Cursor = Cursors.Hand
-            };
-            b.Template = CreateCardButtonTemplate();
-            if (handler != null) b.Click += handler;
-            return b;
+            Button b = new Button { Content = text, Height = 36, Padding = new Thickness(16, 0, 16, 0), Margin = new Thickness(0, 0, 8, 0), Background = primary ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(31, 37, 44)), Foreground = primary ? new SolidColorBrush(Color.FromRgb(4, 16, 10)) : Brushes.White, BorderBrush = primary ? new SolidColorBrush(Color.FromRgb(0, 255, 136)) : new SolidColorBrush(Color.FromRgb(55, 63, 72)), BorderThickness = new Thickness(1), FontWeight = FontWeights.SemiBold, Cursor = Cursors.Hand };
+            b.Template = CreateCardButtonTemplate(); if (handler != null) b.Click += handler; return b;
         }
 
         private void EditProfile_Click(object sender, RoutedEventArgs e)
@@ -312,46 +190,14 @@ namespace TopuLauncher
             _profileSettingsCard.Visibility = _profileSettingsCard.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
             StatusText.Text = _profileSettingsCard.Visibility == Visibility.Visible ? "Profile settings opened." : "Profile settings closed.";
         }
-
-        private void AddModTool_Click(object sender, RoutedEventArgs e)
-        {
-            if (ModSearchInput != null)
-            {
-                ModSearchInput.Focus();
-                if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Visible;
-            }
-            StatusText.Text = "Enter a mod name and use Search & Add.";
-        }
-
-        private void AddModpackTool_Click(object sender, RoutedEventArgs e)
-        {
-            if (ModSearchInput != null)
-            {
-                ModSearchInput.Focus();
-                if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Visible;
-            }
-            StatusText.Text = "Use the profile's Modrinth area to add compatible content to this instance.";
-        }
-
+        private void AddModTool_Click(object sender, RoutedEventArgs e) { if (ModSearchInput != null) { ModSearchInput.Focus(); if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Visible; } StatusText.Text = "Enter a mod name and use Search & Add."; }
+        private void AddModpackTool_Click(object sender, RoutedEventArgs e) { if (ModSearchInput != null) { ModSearchInput.Focus(); if (_profileSettingsCard != null) _profileSettingsCard.Visibility = Visibility.Visible; } StatusText.Text = "Use the profile's Modrinth area to add compatible content to this instance."; }
         private void OpenGameDirectoryTool_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = _gamePath, UseShellExecute = true });
-                StatusText.Text = "Opened the active profile directory.";
-            }
-            catch (Exception ex)
-            {
-                StatusText.Text = "Could not open the profile directory.";
-                WriteException("OPEN PROFILE DIRECTORY ERROR", ex);
-            }
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = _gamePath, UseShellExecute = true }); StatusText.Text = "Opened the active profile directory."; }
+            catch (Exception ex) { StatusText.Text = "Could not open the profile directory."; WriteException("OPEN PROFILE DIRECTORY ERROR", ex); }
         }
-
-        private void RefreshRuntimeLockAfterLaunch(object? sender, RoutedEventArgs e)
-        {
-            Dispatcher.BeginInvoke(new Action(LockRuntimeSelectorsForInstalledProfile));
-        }
-
+        private void RefreshRuntimeLockAfterLaunch(object? sender, RoutedEventArgs e) => Dispatcher.BeginInvoke(new Action(LockRuntimeSelectorsForInstalledProfile));
         private void LockRuntimeSelectorsForInstalledProfile()
         {
             if (VersionBox == null || ProfileSelector == null) return;
@@ -361,59 +207,12 @@ namespace TopuLauncher
         }
 
         private static DropShadowEffect SoftShadow(double blur, double opacity) => new DropShadowEffect { BlurRadius = blur, ShadowDepth = 0, Opacity = opacity, Color = Colors.Black };
-
-        private static void StyleNavigationButton(Button button)
-        {
-            if (button == null) return;
-            button.FontSize = 13;
-            button.FontWeight = FontWeights.SemiBold;
-            AddButtonMotion(button);
-        }
-
-        private static void AddButtonMotion(Button button)
-        {
-            button.MouseEnter -= ProfessionalButtonMouseEnter;
-            button.MouseLeave -= ProfessionalButtonMouseLeave;
-            button.MouseEnter += ProfessionalButtonMouseEnter;
-            button.MouseLeave += ProfessionalButtonMouseLeave;
-        }
-
-        private static void ProfessionalButtonMouseEnter(object sender, MouseEventArgs e)
-        {
-            if (sender is not Button button || !button.IsEnabled) return;
-            button.RenderTransformOrigin = new Point(0.5, 0.5);
-            button.RenderTransform = new ScaleTransform(1.015, 1.015);
-        }
-
-        private static void ProfessionalButtonMouseLeave(object sender, MouseEventArgs e)
-        {
-            if (sender is Button button) button.RenderTransform = new ScaleTransform(1, 1);
-        }
-
-        private void ProfessionalLaunchMouseEnter(object sender, MouseEventArgs e)
-        {
-            if (LaunchBtn == null || !LaunchBtn.IsEnabled) return;
-            LaunchBtn.Effect = SoftShadow(32, 0.62);
-            LaunchBtn.RenderTransformOrigin = new Point(0.5, 0.5);
-            LaunchBtn.RenderTransform = new ScaleTransform(1.012, 1.012);
-        }
-
-        private void ProfessionalLaunchMouseLeave(object sender, MouseEventArgs e)
-        {
-            if (LaunchBtn == null) return;
-            LaunchBtn.Effect = SoftShadow(22, 0.42);
-            LaunchBtn.RenderTransform = new ScaleTransform(1, 1);
-        }
-
-        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root) where T : DependencyObject
-        {
-            int count = VisualTreeHelper.GetChildrenCount(root);
-            for (int i = 0; i < count; i++)
-            {
-                DependencyObject child = VisualTreeHelper.GetChild(root, i);
-                if (child is T match) yield return match;
-                foreach (T nested in FindVisualChildren<T>(child)) yield return nested;
-            }
-        }
+        private static void StyleNavigationButton(Button button) { if (button == null) return; button.FontSize = 13; button.FontWeight = FontWeights.SemiBold; AddButtonMotion(button); }
+        private static void AddButtonMotion(Button button) { button.MouseEnter -= ProfessionalButtonMouseEnter; button.MouseLeave -= ProfessionalButtonMouseLeave; button.MouseEnter += ProfessionalButtonMouseEnter; button.MouseLeave += ProfessionalButtonMouseLeave; }
+        private static void ProfessionalButtonMouseEnter(object sender, MouseEventArgs e) { if (sender is not Button button || !button.IsEnabled) return; button.RenderTransformOrigin = new Point(0.5, 0.5); button.RenderTransform = new ScaleTransform(1.015, 1.015); }
+        private static void ProfessionalButtonMouseLeave(object sender, MouseEventArgs e) { if (sender is Button button) button.RenderTransform = new ScaleTransform(1, 1); }
+        private void ProfessionalLaunchMouseEnter(object sender, MouseEventArgs e) { if (LaunchBtn == null || !LaunchBtn.IsEnabled) return; LaunchBtn.Effect = SoftShadow(32, 0.62); LaunchBtn.RenderTransformOrigin = new Point(0.5, 0.5); LaunchBtn.RenderTransform = new ScaleTransform(1.012, 1.012); }
+        private void ProfessionalLaunchMouseLeave(object sender, MouseEventArgs e) { if (LaunchBtn == null) return; LaunchBtn.Effect = SoftShadow(22, 0.42); LaunchBtn.RenderTransform = new ScaleTransform(1, 1); }
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root) where T : DependencyObject { int count = VisualTreeHelper.GetChildrenCount(root); for (int i = 0; i < count; i++) { DependencyObject child = VisualTreeHelper.GetChild(root, i); if (child is T match) yield return match; foreach (T nested in FindVisualChildren<T>(child)) yield return nested; } }
     }
 }
