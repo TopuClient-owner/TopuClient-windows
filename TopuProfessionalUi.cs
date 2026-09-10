@@ -1,13 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 
 namespace TopuLauncher
 {
-    // Visual-only polish layer. It intentionally leaves the existing layout and
-    // launcher logic alone while giving Topu Client a more premium desktop look.
+    // Runtime-only visual polish. Launcher logic, profile logic and controls stay intact.
+    // This layer upgrades the existing WPF shell without adding a UI framework or dependency.
     public partial class MainWindow
     {
         private static readonly object ProfessionalUiRegistration = RegisterProfessionalUi();
@@ -15,10 +17,7 @@ namespace TopuLauncher
 
         private static object RegisterProfessionalUi()
         {
-            EventManager.RegisterClassHandler(
-                typeof(MainWindow),
-                FrameworkElement.LoadedEvent,
-                new RoutedEventHandler(ProfessionalUiLoaded));
+            EventManager.RegisterClassHandler(typeof(MainWindow), FrameworkElement.LoadedEvent, new RoutedEventHandler(ProfessionalUiLoaded));
             return new object();
         }
 
@@ -34,110 +33,125 @@ namespace TopuLauncher
                 return;
 
             _professionalUiApplied = true;
-
-            // Slightly roomier proportions for a desktop launcher.
-            MinWidth = Math.Max(MinWidth, 940);
-            MinHeight = Math.Max(MinHeight, 670);
+            MinWidth = Math.Max(MinWidth, 1020);
+            MinHeight = Math.Max(MinHeight, 700);
+            Width = Math.Max(Width, 1240);
+            Height = Math.Max(Height, 800);
+            FontFamily = new FontFamily("Segoe UI");
 
             foreach (Border border in FindVisualChildren<Border>(this))
             {
-                if (border.Background is SolidColorBrush brush &&
-                    brush.Color == Color.FromRgb(25, 27, 32))
+                if (border.CornerRadius.TopLeft >= 10)
                 {
-                    border.Effect = new DropShadowEffect
+                    border.SnapsToDevicePixels = true;
+                    border.UseLayoutRounding = true;
+                }
+
+                if (border.Background is SolidColorBrush brush)
+                {
+                    Color c = brush.Color;
+                    if (c == Color.FromRgb(21, 25, 30) || c == Color.FromRgb(25, 27, 32))
                     {
-                        BlurRadius = 18,
-                        ShadowDepth = 0,
-                        Opacity = 0.22
-                    };
+                        border.Background = new LinearGradientBrush(Color.FromRgb(24, 29, 35), Color.FromRgb(17, 21, 26), new Point(0, 0), new Point(1, 1));
+                        border.BorderBrush = new SolidColorBrush(Color.FromRgb(45, 53, 62));
+                        border.Effect = SoftShadow(12, 0.18);
+                    }
+                    else if (c == Color.FromRgb(15, 18, 22))
+                    {
+                        border.Background = new LinearGradientBrush(Color.FromRgb(14, 18, 23), Color.FromRgb(9, 12, 16), new Point(0, 0), new Point(1, 1));
+                    }
+                    else if (c == Color.FromRgb(17, 20, 25))
+                    {
+                        border.Background = new LinearGradientBrush(Color.FromRgb(19, 24, 30), Color.FromRgb(12, 15, 19), new Point(0, 0), new Point(1, 0));
+                    }
                 }
             }
 
+            StyleNavigationButton(TabLaunchBtn);
+            StyleNavigationButton(TabProfilesBtn);
+            StyleNavigationButton(TabAccountsBtn);
+
             if (LaunchBtn != null)
             {
-                LaunchBtn.Effect = new DropShadowEffect
-                {
-                    BlurRadius = 18,
-                    ShadowDepth = 0,
-                    Opacity = 0.38
-                };
+                LaunchBtn.Effect = SoftShadow(22, 0.42);
                 LaunchBtn.MouseEnter += ProfessionalLaunchMouseEnter;
                 LaunchBtn.MouseLeave += ProfessionalLaunchMouseLeave;
             }
-
-            AddButtonMotion(TabLaunchBtn);
-            AddButtonMotion(TabProfilesBtn);
-            AddButtonMotion(TabAccountsBtn);
 
             foreach (Button button in FindVisualChildren<Button>(this))
             {
                 if (button == LaunchBtn || button == TabLaunchBtn || button == TabProfilesBtn || button == TabAccountsBtn)
                     continue;
-
-                if (button.Style != null)
-                    AddButtonMotion(button);
+                AddButtonMotion(button);
             }
+
+            foreach (TextBlock text in FindVisualChildren<TextBlock>(this))
+            {
+                if (text.FontSize >= 28)
+                    text.FontWeight = FontWeights.SemiBold;
+                else if (text.FontSize >= 18)
+                    text.FontWeight = FontWeights.SemiBold;
+            }
+        }
+
+        private static DropShadowEffect SoftShadow(double blur, double opacity)
+        {
+            return new DropShadowEffect { BlurRadius = blur, ShadowDepth = 0, Opacity = opacity, Color = Color.FromRgb(0, 0, 0) };
+        }
+
+        private static void StyleNavigationButton(Button button)
+        {
+            if (button == null) return;
+            button.FontSize = 13;
+            button.FontWeight = FontWeights.SemiBold;
+            button.RenderTransformOrigin = new Point(0.5, 0.5);
+            AddButtonMotion(button);
         }
 
         private static void AddButtonMotion(Button button)
         {
+            button.MouseEnter -= ProfessionalButtonMouseEnter;
+            button.MouseLeave -= ProfessionalButtonMouseLeave;
             button.MouseEnter += ProfessionalButtonMouseEnter;
             button.MouseLeave += ProfessionalButtonMouseLeave;
         }
 
-        private static void ProfessionalButtonMouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        private static void ProfessionalButtonMouseEnter(object sender, MouseEventArgs e)
         {
-            if (sender is not Button button || !button.IsEnabled)
-                return;
-
+            if (sender is not Button button || !button.IsEnabled) return;
             button.RenderTransformOrigin = new Point(0.5, 0.5);
-            button.RenderTransform = new ScaleTransform(1.015, 1.015);
+            button.RenderTransform = new ScaleTransform(1.018, 1.018);
         }
 
-        private static void ProfessionalButtonMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        private static void ProfessionalButtonMouseLeave(object sender, MouseEventArgs e)
         {
             if (sender is Button button)
                 button.RenderTransform = new ScaleTransform(1, 1);
         }
 
-        private void ProfessionalLaunchMouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        private void ProfessionalLaunchMouseEnter(object sender, MouseEventArgs e)
         {
-            if (LaunchBtn == null || !LaunchBtn.IsEnabled)
-                return;
-
-            LaunchBtn.Effect = new DropShadowEffect
-            {
-                BlurRadius = 26,
-                ShadowDepth = 0,
-                Opacity = 0.55
-            };
+            if (LaunchBtn == null || !LaunchBtn.IsEnabled) return;
+            LaunchBtn.Effect = SoftShadow(32, 0.62);
+            LaunchBtn.RenderTransformOrigin = new Point(0.5, 0.5);
+            LaunchBtn.RenderTransform = new ScaleTransform(1.012, 1.012);
         }
 
-        private void ProfessionalLaunchMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        private void ProfessionalLaunchMouseLeave(object sender, MouseEventArgs e)
         {
-            if (LaunchBtn == null)
-                return;
-
-            LaunchBtn.Effect = new DropShadowEffect
-            {
-                BlurRadius = 18,
-                ShadowDepth = 0,
-                Opacity = 0.38
-            };
+            if (LaunchBtn == null) return;
+            LaunchBtn.Effect = SoftShadow(22, 0.42);
+            LaunchBtn.RenderTransform = new ScaleTransform(1, 1);
         }
 
-        private static System.Collections.Generic.IEnumerable<T> FindVisualChildren<T>(DependencyObject root)
-            where T : DependencyObject
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root) where T : DependencyObject
         {
             int count = VisualTreeHelper.GetChildrenCount(root);
             for (int i = 0; i < count; i++)
             {
                 DependencyObject child = VisualTreeHelper.GetChild(root, i);
-                if (child is T match)
-                    yield return match;
-
-                foreach (T nested in FindVisualChildren<T>(child))
-                    yield return nested;
+                if (child is T match) yield return match;
+                foreach (T nested in FindVisualChildren<T>(child)) yield return nested;
             }
         }
     }
