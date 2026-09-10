@@ -101,7 +101,6 @@ namespace TopuLauncher
             if (scroll is not ScrollViewer scrollViewer) return;
             if (VisualTreeHelper.GetParent(scrollViewer) is not Grid bodyGrid) return;
             if (VisualTreeHelper.GetParent(bodyGrid) is not Grid rootGrid) return;
-
             if (bodyGrid.RowDefinitions.Count > 0) return;
 
             bodyGrid.ColumnDefinitions.Clear();
@@ -114,7 +113,6 @@ namespace TopuLauncher
 
             Grid.SetColumn(scrollViewer, 0);
             Grid.SetRow(scrollViewer, 1);
-            Grid.SetColumnSpan(scrollViewer, 1);
             scrollViewer.Margin = new Thickness(0);
 
             StackPanel nav = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(28, 0, 0, 0) };
@@ -155,12 +153,7 @@ namespace TopuLauncher
 
         private void BuildModernProfileCards()
         {
-            if (ProfileSelector == null) return;
-            if (VisualTreeHelper.GetParent(ProfileSelector) is not Panel parent) return;
-            if (_profileCards != null) return;
-
-            int index = parent.Children.IndexOf(ProfileSelector);
-            if (index < 0) return;
+            if (ProfileSelector == null || TabProfiles == null || _profileCards != null) return;
 
             ProfileSelector.Visibility = Visibility.Collapsed;
             _profileCards = new WrapPanel
@@ -168,9 +161,11 @@ namespace TopuLauncher
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(0, 8, 0, 2)
+                Margin = new Thickness(0, 10, 0, 6)
             };
-            parent.Children.Insert(index, _profileCards);
+
+            int insert = Math.Min(2, TabProfiles.Children.Count);
+            TabProfiles.Children.Insert(insert, _profileCards);
 
             ProfileSelector.SelectionChanged += ModernProfileSelectionChanged;
             RebuildProfileCards();
@@ -282,7 +277,7 @@ namespace TopuLauncher
             tools.Children.Add(MakeToolButton("Open Game Directory", false, OpenGameDirectoryTool_Click));
             _profileTools.Child = tools;
 
-            int insert = Math.Min(4, TabProfiles.Children.Count);
+            int insert = Math.Min(3, TabProfiles.Children.Count);
             TabProfiles.Children.Insert(insert, _profileTools);
         }
 
@@ -360,8 +355,7 @@ namespace TopuLauncher
         private void LockRuntimeSelectorsForInstalledProfile()
         {
             if (VersionBox == null || ProfileSelector == null) return;
-            string path = _gamePath;
-            string versions = System.IO.Path.Combine(path, "versions");
+            string versions = System.IO.Path.Combine(_gamePath, "versions");
             bool installed = System.IO.Directory.Exists(versions) && System.IO.Directory.EnumerateFiles(versions, "*.json", System.IO.SearchOption.AllDirectories).Any();
             VersionBox.IsEnabled = !installed;
         }
