@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\TopuLauncher.ico" />
+    <EmbeddedResource Include="Assets\Preculled\options.txt" />
   </ItemGroup>
 
 </Project>
