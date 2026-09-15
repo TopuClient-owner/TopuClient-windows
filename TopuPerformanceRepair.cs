@@ -38,9 +38,6 @@ namespace TopuLauncher
 
             _performanceRepairReady = true;
 
-            // Replace the old Krypton slot with FerriteCore.
-            // Fabric API stays because Dynamic FPS and Sodium Extra need it on
-            // the older profiles this launcher supports.
             if (PerformanceMods.Length >= 6)
             {
                 PerformanceMods[0] = ("fabric-api", "Fabric API");
@@ -57,14 +54,8 @@ namespace TopuLauncher
             if (ProfileSelector != null)
                 ProfileSelector.SelectionChanged += PerformanceRepairProfileChanged;
 
-            // The previous UI code locked the version selector as soon as any
-            // versions folder existed. That makes an installed profile
-            // permanently stuck on 1.21.1. Version is a profile setting, not a
-            // one-time installation lock, so keep it editable.
             VersionBox.IsEnabled = true;
 
-            // Replace the old non-Fabric preview handler. It read the saved
-            // profile before the current UI selection could be committed.
             LaunchBtn.PreviewMouseLeftButtonDown -= LaunchPreview;
             LaunchBtn.AddHandler(
                 Button.PreviewMouseLeftButtonDownEvent,
@@ -97,25 +88,21 @@ namespace TopuLauncher
                 return;
 
             string loader = _loaderBox.SelectedItem?.ToString() ?? "";
+            string preferred = GetRuntimeProfile().Version;
             string current = GetSelectedVersion();
 
             if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
-            {
                 AddVersionIfMissing("1.20.6");
-            }
             else if (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
-            {
                 AddVersionIfMissing("1.17.1");
-            }
 
-            // Restore the saved/current version after adding the compatibility
-            // versions instead of silently jumping back to the first item.
+            string target = string.IsNullOrWhiteSpace(preferred) ? current : preferred;
             int index = -1;
             for (int i = 0; i < VersionBox.Items.Count; i++)
             {
                 if (string.Equals(
                         (VersionBox.Items[i] as ComboBoxItem)?.Content?.ToString(),
-                        current,
+                        target,
                         StringComparison.OrdinalIgnoreCase))
                 {
                     index = i;
@@ -157,9 +144,6 @@ namespace TopuLauncher
             runtime.RamGb = ram;
             WriteRuntimeProfile(runtime);
 
-            // MainWindow.LaunchBtn_Click calls SetActiveProfile(), which reloads
-            // the older ProfileSettings file. Keep that file synchronized too,
-            // otherwise it can put the UI straight back on 1.21.1.
             SaveProfileSettings(
                 _gamePath,
                 new ProfileSettings
@@ -176,7 +160,6 @@ namespace TopuLauncher
             string loader = _loaderBox?.SelectedItem?.ToString() ?? "Fabric";
             string version = GetSelectedVersion();
 
-            // Java8RuntimeFix owns Forge 1.8.9. Do not start a second launch.
             if (loader.Equals("Forge", StringComparison.OrdinalIgnoreCase) &&
                 version.Equals("1.8.9", StringComparison.OrdinalIgnoreCase))
             {
@@ -193,10 +176,6 @@ namespace TopuLauncher
                 if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
                 {
                     await EnsureExtraPerformanceModAsync("immediatelyfast", "ImmediatelyFast", version);
-
-                    // Let the existing, already-tested Fabric installer perform
-                    // the normal Minecraft/Fabric installation and its six-mod
-                    // performance stack.
                     await LaunchBtn_ClickInternalForRepairAsync();
                     return;
                 }
@@ -214,8 +193,6 @@ namespace TopuLauncher
                     return;
                 }
 
-                // NeoForge is intentionally left on the existing runtime path
-                // until its installer is implemented independently of Fabric.
                 await LaunchNonFabricProfileAsync();
             }
             catch (Exception ex)
