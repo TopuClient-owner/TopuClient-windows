@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Static Badge" src="https://img.shields.io/badge/PLATFORM-.NET%208">
+  https://img.shields.io/badge/PLATFORM-.NET8brightgreen?style=for-the-badge
   <img src="https://shields.io" alt="All Loaders">
   <img src="https://shields.io" alt="License: GPL 3.0">
 </p>
