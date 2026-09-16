@@ -27,3 +27,6 @@ TopuClient is built to strip away bloat and give you a blistering fast, modern l
 | 👥 **Universal Account Support** | Play freely with full support for both **Offline** profiles and **Microsoft** accounts. |
 | 🛠️ **Built-in Mod Integration** | Search and install mods directly from **Modrinth** inside the client interface with automatic version mapping. |
 | 🎛️ **Advanced Customization** | Fine-tune your allocated RAM, switch Java runtimes, and launch custom profiles instantly. |
+
+NOTICE:
+Stealing our clients name or adding malware on your fork will result in a takedown of repo
