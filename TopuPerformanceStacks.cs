@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
@@ -19,25 +18,21 @@ namespace TopuLauncher
             "fabric-api", "sodium", "sodium-extra", "lithium",
             "dynamic-fps", "ferrite-core", "immediatelyfast", "krypton"
         };
-
         private static readonly string[] QuiltMods =
         {
             "qsl", "sodium", "sodium-extra", "lithium",
             "dynamic-fps", "ferrite-core", "immediatelyfast"
         };
-
         private static readonly string[] ForgeMods =
         {
             "embeddium", "ferrite-core", "modernfix",
             "immediatelyfast", "dynamic-fps", "entityculling"
         };
-
         private static readonly string[] NeoForgeMods =
         {
             "sodium", "sodium-extra", "lithium", "ferrite-core",
             "modernfix", "immediatelyfast", "dynamic-fps", "entityculling"
         };
-
         private static readonly string[] Forge189Mods = { "foamfix" };
 
         private CancellationTokenSource? _performanceCts;
@@ -46,28 +41,20 @@ namespace TopuLauncher
 
         private static object RegisterPerformanceHandlers()
         {
-            EventManager.RegisterClassHandler(
-                typeof(MainWindow),
-                FrameworkElement.LoadedEvent,
-                new RoutedEventHandler(PerformanceLoaded));
+            EventManager.RegisterClassHandler(typeof(MainWindow), FrameworkElement.LoadedEvent, new RoutedEventHandler(PerformanceLoaded));
             return new object();
         }
 
         private static void PerformanceLoaded(object sender, RoutedEventArgs e)
         {
             if (sender is MainWindow window)
-            {
-                window.Dispatcher.BeginInvoke(
-                    new Action(window.InstallPerformanceHooks),
-                    DispatcherPriority.ApplicationIdle);
-            }
+                window.Dispatcher.BeginInvoke(new Action(window.InstallPerformanceHooks), DispatcherPriority.ApplicationIdle);
         }
 
         private void InstallPerformanceHooks()
         {
             if (_performanceHooksInstalled || _loaderBox == null)
                 return;
-
             _performanceHooksInstalled = true;
             _loaderBox.SelectionChanged += PerformanceLoaderChanged;
             VersionBox.SelectionChanged += PerformanceVersionChanged;
@@ -77,7 +64,6 @@ namespace TopuLauncher
         {
             if (!_performanceHooksInstalled || _loaderBox?.SelectedItem == null)
                 return;
-
             string loader = _loaderBox.SelectedItem.ToString() ?? "Vanilla";
             if (!loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase))
                 await PreparePerformanceAsync(loader, GetSelectedVersion());
@@ -87,10 +73,17 @@ namespace TopuLauncher
         {
             if (!_performanceHooksInstalled || VersionBox.SelectedItem == null || _loaderBox?.SelectedItem == null)
                 return;
-
             string loader = _loaderBox.SelectedItem.ToString() ?? "Vanilla";
             if (!loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase))
                 await PreparePerformanceAsync(loader, GetSelectedVersion());
+        }
+
+        // Compatibility entry point used by the existing NeoForge launcher.
+        // It delegates to the same loader-specific stack and does not alter
+        // profile selection or intercept the Launch button.
+        private Task InstallUniversalPerformancePackAsync(string loader, string version)
+        {
+            return PreparePerformanceAsync(loader, version);
         }
 
         private async Task PreparePerformanceAsync(string loader, string version)
@@ -133,34 +126,23 @@ namespace TopuLauncher
         {
             if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
                 return version == "1.8.9" ? Array.Empty<string>() : FabricMods;
-
             if (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
                 return QuiltMods;
-
             if (loader.Equals("Forge", StringComparison.OrdinalIgnoreCase))
                 return version == "1.8.9" ? Forge189Mods : ForgeMods;
-
             if (loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase))
                 return NeoForgeMods;
-
             return Array.Empty<string>();
         }
 
-        private async Task InstallPerformanceModAsync(
-            string project,
-            string loader,
-            string version,
-            string modsPath,
-            CancellationToken token)
+        private async Task InstallPerformanceModAsync(string project, string loader, string version, string modsPath, CancellationToken token)
         {
-            string query =
-                "?loaders=" + Uri.EscapeDataString(JsonSerializer.Serialize(new[] { loader.ToLowerInvariant() })) +
-                "&game_versions=" + Uri.EscapeDataString(JsonSerializer.Serialize(new[] { version })) +
-                "&version_type=release";
+            string query = "?loaders=" + Uri.EscapeDataString(JsonSerializer.Serialize(new[] { loader.ToLowerInvariant() })) +
+                           "&game_versions=" + Uri.EscapeDataString(JsonSerializer.Serialize(new[] { version })) +
+                           "&version_type=release";
 
             using HttpResponseMessage response = await Http.GetAsync(
-                "https://api.modrinth.com/v2/project/" + Uri.EscapeDataString(project) + "/version" + query,
-                token);
+                "https://api.modrinth.com/v2/project/" + Uri.EscapeDataString(project) + "/version" + query, token);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -168,17 +150,13 @@ namespace TopuLauncher
                 return;
             }
 
-            using JsonDocument doc = JsonDocument.Parse(
-                await response.Content.ReadAsStringAsync(token));
-
-            if (doc.RootElement.ValueKind != JsonValueKind.Array ||
-                doc.RootElement.GetArrayLength() == 0)
+            using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(token));
+            if (doc.RootElement.ValueKind != JsonValueKind.Array || doc.RootElement.GetArrayLength() == 0)
                 return;
 
             foreach (JsonElement release in doc.RootElement.EnumerateArray())
             {
-                if (!release.TryGetProperty("files", out JsonElement files) ||
-                    files.ValueKind != JsonValueKind.Array)
+                if (!release.TryGetProperty("files", out JsonElement files) || files.ValueKind != JsonValueKind.Array)
                     continue;
 
                 JsonElement selected = default;
@@ -186,9 +164,7 @@ namespace TopuLauncher
                 {
                     if (selected.ValueKind == JsonValueKind.Undefined)
                         selected = file;
-
-                    if (file.TryGetProperty("primary", out JsonElement primary) &&
-                        primary.GetBoolean())
+                    if (file.TryGetProperty("primary", out JsonElement primary) && primary.GetBoolean())
                     {
                         selected = file;
                         break;
@@ -211,7 +187,6 @@ namespace TopuLauncher
                     await File.WriteAllBytesAsync(destination, data, token);
                     WriteLog($"Installed {loader} performance mod: {filename}");
                 }
-
                 return;
             }
         }
