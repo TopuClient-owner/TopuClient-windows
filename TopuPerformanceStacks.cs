@@ -29,8 +29,8 @@ namespace TopuLauncher
 
         private static readonly string[] TopuForgePerformance =
         {
-            "embeddium", "sodium-extra", "lithium", "ferrite-core",
-            "modernfix", "immediatelyfast", "dynamic-fps", "entityculling"
+            "embeddium", "ferrite-core", "modernfix", "immediatelyfast",
+            "dynamic-fps", "entityculling"
         };
 
         private static readonly string[] TopuNeoForgePerformance =
@@ -42,6 +42,13 @@ namespace TopuLauncher
         private static readonly string[] TopuForge189Performance =
         {
             "foamfix"
+        };
+
+        private static readonly string[] TopuKnownPerformanceProjects =
+        {
+            "fabric-api", "qsl", "sodium", "sodium-extra", "lithium", "dynamic-fps",
+            "ferrite-core", "immediatelyfast", "krypton", "embeddium", "modernfix",
+            "entityculling", "foamfix"
         };
 
         private CancellationTokenSource? _topuPerformanceCts;
@@ -80,8 +87,8 @@ namespace TopuLauncher
             if (_topuPerformanceHooksInstalled || _loaderBox == null)
                 return;
 
-            // Disable the older universal runtime's version/performance hooks.
-            // The core launcher remains responsible for profile/version UI.
+            // The old universal runtime must not own version/performance events.
+            // Core launcher code remains the single owner of profile/version UI.
             _universalVersionCts?.Cancel();
             _universalPerformanceCts?.Cancel();
             _loaderBox.SelectionChanged -= UniversalLoaderSelectionChanged;
@@ -192,7 +199,7 @@ namespace TopuLauncher
                 string modsPath = Path.Combine(_gamePath, "mods");
                 Directory.CreateDirectory(modsPath);
 
-                RemoveIncompatibleTopuPerformanceMods(modsPath, loader);
+                RemoveIncompatibleTopuPerformanceMods(modsPath, loader, minecraftVersion);
 
                 foreach (string project in GetTopuPerformanceProjects(loader, minecraftVersion))
                 {
@@ -221,7 +228,7 @@ namespace TopuLauncher
         private static IEnumerable<string> GetTopuPerformanceProjects(string loader, string minecraftVersion)
         {
             if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
-                return minecraftVersion == "1.8.9" ? Array.Empty<string>() : TopuFabricPerformance;
+                return TopuFabricPerformance;
 
             if (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
                 return TopuQuiltPerformance;
@@ -235,31 +242,24 @@ namespace TopuLauncher
             return Array.Empty<string>();
         }
 
-        private static void RemoveIncompatibleTopuPerformanceMods(string modsPath, string loader)
+        private static void RemoveIncompatibleTopuPerformanceMods(string modsPath, string loader, string minecraftVersion)
         {
-            string[] forbidden;
-
-            if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
-                forbidden = new[] { "embeddium", "foamfix", "qfapi", "qsl" };
-            else if (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
-                forbidden = new[] { "fabric-api", "krypton", "embeddium", "foamfix" };
-            else if (loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase))
-                forbidden = new[] { "fabric-api", "krypton", "foamfix", "qfapi", "qsl" };
-            else if (loader.Equals("Forge", StringComparison.OrdinalIgnoreCase))
-                forbidden = new[] { "fabric-api", "krypton", "qfapi", "qsl" };
-            else
-                return;
+            HashSet<string> allowed = new HashSet<string>(
+                GetTopuPerformanceProjects(loader, minecraftVersion),
+                StringComparer.OrdinalIgnoreCase);
 
             foreach (string file in Directory.EnumerateFiles(modsPath, "*.jar"))
             {
                 string name = Path.GetFileName(file);
-                if (!forbidden.Any(x => name.Contains(x, StringComparison.OrdinalIgnoreCase)))
+                string? matched = TopuKnownPerformanceProjects.FirstOrDefault(project =>
+                    name.Contains(project, StringComparison.OrdinalIgnoreCase));
+
+                if (matched == null || allowed.Contains(matched))
                     continue;
 
                 try
                 {
                     File.Delete(file);
-                    // Do not touch unrelated mods in the profile.
                     WriteLog($"Removed incompatible {loader} performance mod: {name}");
                 }
                 catch (Exception ex)
@@ -310,6 +310,7 @@ namespace TopuLauncher
                         file = candidate;
                         break;
                     }
+
                     if (file.ValueKind == JsonValueKind.Undefined)
                         file = candidate;
                 }
