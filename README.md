@@ -9,9 +9,7 @@
 </p>
 
 <p align="center">
-  https://img.shields.io/badge/PLATFORM-.NET8brightgreen?style=for-the-badge
-  <img src="https://shields.io" alt="All Loaders">
-  <img src="https://shields.io" alt="License: GPL 3.0">
+  <img src="https://img.shields.io/badge/License-GPL 3.0%20-green?style=flat-square" alt="License">
 </p>
 
 ---
