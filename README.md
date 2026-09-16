@@ -10,7 +10,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-GPL 3.0%20-green?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/ALL LOADERS%20-orange?style=flat-square" alt="License">       
+  <img src="https://img.shields.io/badge/ALL-SLOADERS%20-orange?style=flat-square" alt="License">       
 </p>
 
 ---
