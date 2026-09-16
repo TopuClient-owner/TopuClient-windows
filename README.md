@@ -28,5 +28,17 @@ TopuClient is built to strip away bloat and give you a blistering fast, modern l
 | 🛠️ **Built-in Mod Integration** | Search and install mods directly from **Modrinth** inside the client interface with automatic version mapping. |
 | 🎛️ **Advanced Customization** | Fine-tune your allocated RAM, switch Java runtimes, and launch custom profiles instantly. |
 
-NOTICE:
-Stealing our clients name or adding malware on your fork will result in a takedown of repo
+## ⚠️ Forking Policy & Security Notice
+
+### 1. Open Source Requirements (GPL-3.0)
+TopuClient is licensed under the GNU General Public License v3.0 (GPL-3.0). If you fork this project or distribute modified versions of this software, you are **legally required** to keep your entire repository public and open-source under the exact same GPL-3.0 license terms. Any closed-source distributions or copyright violations will be met with an immediate **DMCA Takedown Notice**.
+
+### 2. Trademark Restrictions (Protecting the Community)
+The name **"TopuClient"**, its logos, and related branding assets belong strictly to this solo project. 
+* You **may not** distribute modified forks or compiled releases under the name "TopuClient". 
+* Any distributed forks must be renamed entirely (e.g., "CustomPerformanceClient") to avoid misleading users. 
+* Distribution of altered binaries using the "TopuClient" identity will be reported for **Trademark Infringement and Impersonation**.
+
+### 3. Absolute Zero-Tolerance for Malware
+We actively monitor forks of this repository. If a fork or third-party distribution contains malware, token stealers, keyloggers, or hidden telemetry, it will be reported immediately to the **GitHub Trust & Safety Team** under the **GitHub Abuse/Malware Policy**. GitHub will permanently ban the offender's account and wipe their repositories. Only download official releases from this repository!
+
