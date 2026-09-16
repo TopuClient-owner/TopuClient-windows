@@ -21,10 +21,8 @@ namespace TopuLauncher
 
         private static void ProfileTruthFixLoaded(object sender, RoutedEventArgs e)
         {
-            if (sender is not MainWindow window)
-                return;
-
-            window.InstallProfileTruthFix();
+            if (sender is MainWindow window)
+                window.InstallProfileTruthFix();
         }
 
         private void InstallProfileTruthFix()
@@ -33,10 +31,9 @@ namespace TopuLauncher
                 return;
 
             _profileTruthFixInstalled = true;
-
-            _loaderBox.SelectionChanged += ProfileTruthUiChanged;
-            VersionBox.SelectionChanged += ProfileTruthUiChanged;
-            RamSlider.ValueChanged += ProfileTruthUiChanged;
+            _loaderBox.SelectionChanged += ProfileTruthSelectionChanged;
+            VersionBox.SelectionChanged += ProfileTruthSelectionChanged;
+            RamSlider.ValueChanged += ProfileTruthRamChanged;
             ProfileSelector.SelectionChanged += ProfileTruthProfileChanged;
 
             TabProfiles.AddHandler(
@@ -49,7 +46,14 @@ namespace TopuLauncher
                 DispatcherPriority.ApplicationIdle);
         }
 
-        private void ProfileTruthUiChanged(object? sender, EventArgs e)
+        private void ProfileTruthSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            Dispatcher.BeginInvoke(
+                new Action(RefreshProfileTruthUi),
+                DispatcherPriority.DataBind);
+        }
+
+        private void ProfileTruthRamChanged(object? sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Dispatcher.BeginInvoke(
                 new Action(RefreshProfileTruthUi),
@@ -75,14 +79,14 @@ namespace TopuLauncher
                     StringComparison.OrdinalIgnoreCase))
                 return;
 
-            // The original save handler writes the legacy Version/RAM fields.
-            // Commit the complete runtime profile afterwards so Loader is never
-            // lost from topu-profile.json.
             Dispatcher.BeginInvoke(
                 new Action(() =>
                 {
                     try
                     {
+                        // The legacy save writes Version/RAM. Immediately after
+                        // it finishes, write the complete runtime profile so the
+                        // selected Loader is never lost.
                         SaveRuntimeLoaderSetting();
                         RefreshProfileTruthUi();
                         UpdateLaunchSummary();
@@ -101,7 +105,6 @@ namespace TopuLauncher
             {
                 RuntimeProfileSettings profile = GetRuntimeProfile();
                 string loader = profile.Loader;
-
                 if (string.IsNullOrWhiteSpace(loader))
                     loader = _loaderBox?.SelectedItem?.ToString() ?? "Vanilla";
 
@@ -109,21 +112,14 @@ namespace TopuLauncher
                 if (!string.IsNullOrWhiteSpace(profile.Version))
                     version = profile.Version;
 
-                int ram = Math.Clamp(
-                    (int)RamSlider.Value,
-                    2,
-                    12);
-
+                int ram = Math.Clamp((int)RamSlider.Value, 2, 12);
                 if (profile.RamGb >= 2)
                     ram = Math.Clamp(profile.RamGb, 2, 12);
 
                 string profileName = GetActiveProfileName();
 
                 if (SelectedProfileLabel != null)
-                {
-                    SelectedProfileLabel.Text =
-                        $"● {profileName}   •   {loader} {version}   •   {ram}GB RAM";
-                }
+                    SelectedProfileLabel.Text = $"● {profileName}   •   {loader} {version}   •   {ram}GB RAM";
 
                 if (LaunchProfileLabel != null)
                     LaunchProfileLabel.Text = profileName;
