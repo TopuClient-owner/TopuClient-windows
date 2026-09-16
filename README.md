@@ -41,6 +41,6 @@ The name **"TopuClient"**, its logos, and related branding assets belong strictl
 * Distribution of altered binaries using the "TopuClient" identity will be reported for **Trademark Infringement and Impersonation**.
 
 ### 3. Absolute Zero-Tolerance for Malware
-We actively monitor forks of this repository. If a fork or third-party distribution contains malware, token stealers, keyloggers, or hidden telemetry, it will be reported immediately to the **GitHub Trust & Safety Team** under the **GitHub Abuse/Malware Policy**. GitHub will permanently ban the offender's account and wipe their repositories. Only download official releases from this repository!
+We actively monitor forks of this repository .We will review every single fork. If a fork or third-party distribution contains malware, token stealers, keyloggers, or hidden telemetry, it will be reported immediately to the **GitHub Trust & Safety Team** under the **GitHub Abuse/Malware Policy**. GitHub will permanently ban the offender's account and wipe their repositories. Only download official releases from this repository!
 
 If you download a file named TopuClient from a different GitHub account, a Discord server, or a YouTube description, it is a counterfeit clone. Official TopuClient releases are exclusively compiled and signed by TopuClient-owner. We Are Not responsible for the loss you get by downloading TopuClient from an unauthorized source.
