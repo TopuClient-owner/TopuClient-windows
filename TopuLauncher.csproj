@@ -19,8 +19,8 @@
     <DebugSymbols>false</DebugSymbols>
     <ApplicationIcon>Assets\TopuLauncher.ico</ApplicationIcon>
 
-    <!-- Existing legacy launcher code contains intentional nullable UI/account paths. -->
-    <NoWarn>$(NoWarn);CS8601;CS8602</NoWarn>
+    <!-- Keep the existing launcher nullable/legacy code warning-clean. -->
+    <NoWarn>$(NoWarn);CS0169;CS8601;CS8602</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
