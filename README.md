@@ -11,7 +11,8 @@
   <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square&logo=windows" alt="Platform">
   <img src="https://img.shields.io/badge/Framework-.NET%208%20WPF-purple?style=flat-square&logo=dotnet" alt=".NET">
   <img src="https://img.shields.io/badge/Loader-Fabric-orange?style=flat-square&logo=minecraft" alt="Fabric">
-  <img src="https://img.shields.io/badge/License-Open%20Source-green?style=flat-square" alt="License">
+ <img src="https://shields.io" alt="License: GPL 3.0">
+
 </p>
 
 ---
