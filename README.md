@@ -1,5 +1,6 @@
- <img width="383" height="372" alt="Screenshot 2026-08-30 011429" src="https://github.com/user-attachments/assets/dc252b69-c18c-4ab5-b4b2-603759bcb06c" />
-
+<p align="center">
+  <img src="https://ibb.co" alt="TopuClient Logo" width="350">
+</p>
 
 <h1 align="center">TopuClient</h1>
 
@@ -8,12 +9,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square&logo=windows" alt="Platform">
-  <img src="https://img.shields.io/badge/Framework-.NET%208%20WPF-purple?style=flat-square&logo=dotnet" alt=".NET">
-  <img src="https://img.shields.io/badge/Loader-Fabric-orange?style=flat-square&logo=minecraft" alt="Fabric">
- <img src="https://shields.io" alt="License">
-
-
+  <img src="https://shields.io" alt="Platform">
+  <img src="https://shields.io" alt=".NET">
+  <img src="https://shields.io" alt="All Loaders">
+  <img src="https://shields.io" alt="License: GPL 3.0">
 </p>
 
 ---
@@ -44,7 +43,4 @@ The name **"TopuClient"**, its logos, and related branding assets belong strictl
 ### 3. Absolute Zero-Tolerance for Malware
 We actively monitor forks of this repository. If a fork or third-party distribution contains malware, token stealers, keyloggers, or hidden telemetry, it will be reported immediately to the **GitHub Trust & Safety Team** under the **GitHub Abuse/Malware Policy**. GitHub will permanently ban the offender's account and wipe their repositories. Only download official releases from this repository!
 
-
-If you download a file named TopuClient from a different GitHub account, a Discord server, or a YouTube description, it is a counterfeit clone. Official TopuClient releases are exclusively compiled and signed by TopuClient-owner.We Are Not responsible for the loss you get by downloading TopuClient from an unauthorized source.
-
-
+If you download a file named TopuClient from a different GitHub account, a Discord server, or a YouTube description, it is a counterfeit clone. Official TopuClient releases are exclusively compiled and signed by TopuClient-owner. We Are Not responsible for the loss you get by downloading TopuClient from an unauthorized source.
