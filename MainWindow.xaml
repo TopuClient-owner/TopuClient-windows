@@ -1,268 +1,1096 @@
+
 <Window x:Class="TopuLauncher.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
-        Title="Topu Client"
-        Icon="Assets/TopuLauncher.ico"
-        Width="1180"
-        Height="760"
-        MinWidth="980"
-        MinHeight="680"
-        WindowStartupLocation="CenterScreen"
-        WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent">
+     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+     mc:Ignorable="d"
+     Title="Topu Client"
+     Icon="Assets/TopuLauncher.ico"
+     Height="650"
+     Width="1000"
+     MinHeight="650"
+     MinWidth="900"
+     WindowStartupLocation="CenterScreen"
+     WindowStyle="None"
+     AllowsTransparency="True"
+     Background="Transparent">
 
-    <Window.Resources>
-        <SolidColorBrush x:Key="Bg" Color="#090B0E"/>
-        <SolidColorBrush x:Key="Sidebar" Color="#0F1216"/>
-        <SolidColorBrush x:Key="Card" Color="#15191E"/>
-        <SolidColorBrush x:Key="Card2" Color="#111419"/>
-        <SolidColorBrush x:Key="Border" Color="#272C34"/>
-        <SolidColorBrush x:Key="Text" Color="#F4F7FA"/>
-        <SolidColorBrush x:Key="Muted" Color="#7B838F"/>
-        <SolidColorBrush x:Key="Dim" Color="#555C67"/>
-        <SolidColorBrush x:Key="Green" Color="#00FF88"/>
-        <SolidColorBrush x:Key="GreenDark" Color="#063D27"/>
+<Window.Resources>
 
-        <!-- Compatibility aliases used by the runtime/profile UI partial. -->
-        <SolidColorBrush x:Key="WindowBackground" Color="#090B0E"/>
-        <SolidColorBrush x:Key="SidebarBackground" Color="#0F1216"/>
-        <SolidColorBrush x:Key="CardBackground" Color="#15191E"/>
-        <SolidColorBrush x:Key="CardBorder" Color="#272C34"/>
-        <SolidColorBrush x:Key="InputBackground" Color="#101318"/>
-        <SolidColorBrush x:Key="InputBorder" Color="#303640"/>
-        <SolidColorBrush x:Key="MutedText" Color="#7B838F"/>
-        <SolidColorBrush x:Key="SecondaryText" Color="#A8AFB8"/>
-        <SolidColorBrush x:Key="PrimaryText" Color="#F4F7FA"/>
-        <SolidColorBrush x:Key="TopuGreen" Color="#00FF88"/>
-        <SolidColorBrush x:Key="TopuGreenDark" Color="#00C96A"/>
+    <!-- ========================================================= -->
+    <!-- COLORS -->
+    <!-- ========================================================= -->
 
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource Card}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="14"/>
-            <Setter Property="Padding" Value="18"/>
-        </Style>
+    <SolidColorBrush x:Key="WindowBackground"
+                     Color="#101114"/>
 
-        <Style x:Key="ButtonBase" TargetType="Button">
-            <Setter Property="Background" Value="#20252B"/>
-            <Setter Property="Foreground" Value="{StaticResource Text}"/>
-            <Setter Property="BorderBrush" Value="#343A43"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="14,8"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#292F37"/><Setter Property="BorderBrush" Value="#454C56"/></Trigger>
-                <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="#171B20"/></Trigger>
-                <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
-            </Style.Triggers>
-        </Style>
+    <SolidColorBrush x:Key="SidebarBackground"
+                     Color="#15171B"/>
 
-        <Style x:Key="ModernButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}"/>
+    <SolidColorBrush x:Key="CardBackground"
+                     Color="#191B20"/>
 
-        <Style x:Key="GreenButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
-            <Setter Property="Background" Value="{StaticResource Green}"/>
-            <Setter Property="Foreground" Value="#06120B"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Green}"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#32FF9E"/><Setter Property="BorderBrush" Value="#32FF9E"/></Trigger>
-            </Style.Triggers>
-        </Style>
+    <SolidColorBrush x:Key="CardBorder"
+                     Color="#292C33"/>
 
-        <Style x:Key="Input" TargetType="TextBox">
-            <Setter Property="Background" Value="{StaticResource InputBackground}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource InputBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="12,7"/>
-            <Setter Property="Height" Value="38"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="ModernTextBox" TargetType="TextBox" BasedOn="{StaticResource Input}"/>
+    <SolidColorBrush x:Key="InputBackground"
+                     Color="#111318"/>
 
-        <Style x:Key="Combo" TargetType="ComboBox">
-            <Setter Property="Background" Value="#101318"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#303640"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Height" Value="38"/>
-        </Style>
-        <Style x:Key="ModernComboBox" TargetType="ComboBox" BasedOn="{StaticResource Combo}"/>
+    <SolidColorBrush x:Key="InputBorder"
+                     Color="#30343C"/>
 
-        <Style x:Key="SideButton" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#818995"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="16,0"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9">
-                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#1A1F25"/><Setter Property="Foreground" Value="#E7EBEF"/></Trigger></Style.Triggers>
-        </Style>
-        <Style x:Key="SidebarButton" TargetType="Button" BasedOn="{StaticResource SideButton}"/>
-    </Window.Resources>
+    <SolidColorBrush x:Key="MutedText"
+                     Color="#777D88"/>
 
-    <Border Background="{StaticResource Bg}" BorderBrush="#303640" BorderThickness="1" CornerRadius="16">
-        <Grid>
-            <Grid.RowDefinitions><RowDefinition Height="52"/><RowDefinition Height="*"/><RowDefinition Height="34"/></Grid.RowDefinitions>
+    <SolidColorBrush x:Key="SecondaryText"
+                     Color="#A8ADB7"/>
 
-            <Border Grid.Row="0" Background="#111419" CornerRadius="16,16,0,0" MouseDown="TitleBar_MouseDown">
-                <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
-                        <Border Width="32" Height="32" CornerRadius="9" Background="{StaticResource GreenDark}" BorderBrush="#147247" BorderThickness="1">
-                            <TextBlock Text="⚡" Foreground="{StaticResource Green}" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="TOPU CLIENT" Foreground="White" FontSize="14" FontWeight="Bold"/>
-                            <TextBlock Text="PERFORMANCE LAUNCHER" Foreground="{StaticResource Green}" FontSize="8" FontWeight="Bold" Margin="0,1,0,0"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="—" Width="48" Height="52" Background="Transparent" Foreground="#808792" BorderThickness="0" FontSize="17" Click="Minimize_Click"/>
-                        <Button Content="✕" Width="48" Height="52" Background="Transparent" Foreground="#808792" BorderThickness="0" FontSize="14" Click="Close_Click"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+    <SolidColorBrush x:Key="PrimaryText"
+                     Color="#F5F7FA"/>
 
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="225"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Background="{StaticResource Sidebar}" BorderBrush="#252A31" BorderThickness="0,0,1,0">
-                    <Grid>
-                        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                        <StackPanel Margin="14,24,14,0">
-                            <TextBlock Text="WORKSPACE" Foreground="#4F5660" FontSize="9" FontWeight="Bold" Margin="8,0,0,8"/>
-                            <Button x:Name="TabLaunchBtn" Content="⚡   Launch Game" Height="44" Style="{StaticResource SideButton}" Foreground="{StaticResource Green}" Tag="TabLaunch" Click="SwitchTab_Click"/>
-                            <Button x:Name="TabProfilesBtn" Content="◈   Profiles &amp; Mods" Height="44" Style="{StaticResource SideButton}" Tag="TabProfiles" Click="SwitchTab_Click"/>
-                            <Button x:Name="TabAccountsBtn" Content="●   Accounts" Height="44" Style="{StaticResource SideButton}" Tag="TabAccounts" Click="SwitchTab_Click"/>
-                        </StackPanel>
-                        <StackPanel Grid.Row="1" Margin="14,0,14,18">
-                            <Border Background="#0B0E11" BorderBrush="#252A31" BorderThickness="1" CornerRadius="11" Padding="12">
-                                <StackPanel>
-                                    <TextBlock Text="ACTIVE INSTANCE" Foreground="#515863" FontSize="8" FontWeight="Bold"/>
-                                    <TextBlock x:Name="SidebarProfileLabel" Text="default" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,5,0,0"/>
-                                    <TextBlock x:Name="SidebarRuntimeLabel" Text="Selected profile" Foreground="{StaticResource Green}" FontSize="9" Margin="0,2,0,0"/>
-                                    <TextBlock Text="● READY" Foreground="#66707B" FontSize="8" FontWeight="Bold" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+    <SolidColorBrush x:Key="TopuGreen"
+                     Color="#00FF88"/>
 
-                <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <Grid Margin="30,26,30,28">
+    <SolidColorBrush x:Key="TopuGreenDark"
+                     Color="#00C96A"/>
 
-                        <StackPanel x:Name="TabLaunch" Visibility="Visible">
-                            <TextBlock Text="Launch Game" Foreground="White" FontSize="30" FontWeight="Bold"/>
-                            <TextBlock Text="Everything is ready for competitive Minecraft." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,5,0,20"/>
-                            <Border Background="#0F241A" BorderBrush="#175B3C" BorderThickness="1" CornerRadius="15" Padding="22" Margin="0,0,0,16">
-                                <Grid>
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="TOPU PERFORMANCE EDITION" Foreground="{StaticResource Green}" FontSize="9" FontWeight="Bold"/>
-                                        <TextBlock Text="High FPS. Low latency. Clean PvP." Foreground="White" FontSize="24" FontWeight="Bold" Margin="0,6,0,0"/>
-                                        <TextBlock Text="Launch the selected profile with its own loader, version, RAM, mods and worlds." Foreground="#84908A" FontSize="10" Margin="0,6,0,0"/>
-                                    </StackPanel>
-                                    <Border Grid.Column="1" Width="92" Height="92" CornerRadius="18" Background="#082F20" BorderBrush="#155C3E" BorderThickness="1"><TextBlock Text="⚡" Foreground="{StaticResource Green}" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-                                </Grid>
-                            </Border>
-                            <Grid Margin="0,0,0,14">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Style="{StaticResource CardStyle}" Margin="0,0,7,0">
-                                    <StackPanel><TextBlock Text="ACCOUNT" Foreground="#606772" FontSize="9" FontWeight="Bold"/><TextBlock x:Name="LaunchAccountLabel" Text="No account" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,5,0,0"/><TextBlock x:Name="LaunchAccountTypeLabel" Text="Add an account in Accounts" Foreground="{StaticResource Green}" FontSize="9" Margin="0,3,0,0"/></StackPanel>
-                                </Border>
-                                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="7,0,0,0">
-                                    <StackPanel><TextBlock Text="ACTIVE PROFILE" Foreground="#606772" FontSize="9" FontWeight="Bold"/><TextBlock x:Name="LaunchProfileLabel" Text="default" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,5,0,0"/><StackPanel Orientation="Horizontal" Margin="0,3,0,0"><TextBlock x:Name="LaunchLoaderLabel" Text="Selected loader" Foreground="{StaticResource Green}" FontSize="9"/><TextBlock Text="  •  " Foreground="#555C66" FontSize="9"/><TextBlock x:Name="LaunchVersionLabel" Text="Selected version" Foreground="#A8AFB8" FontSize="9"/><TextBlock Text="  •  " Foreground="#555C66" FontSize="9"/><TextBlock x:Name="LaunchRamLabel" Text="Selected RAM" Foreground="#A8AFB8" FontSize="9"/></StackPanel></StackPanel>
-                                </Border>
-                            </Grid>
-                            <TextBlock Text="QUICK CONNECT" Foreground="#606772" FontSize="9" FontWeight="Bold" Margin="0,0,0,8"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,20"><Button Content="GamerTee" Width="120" Height="36" Margin="0,0,9,0" Style="{StaticResource ButtonBase}" Tag="gametee.net" Click="JoinServer_Click"/><Button Content="Sharpness.gg" Width="130" Height="36" Style="{StaticResource ButtonBase}" Tag="sharpness.gg" Click="JoinServer_Click"/></StackPanel>
-                            <Button x:Name="LaunchBtn" Content="⚡   LAUNCH SELECTED PROFILE" Height="54" Style="{StaticResource GreenButton}" FontSize="14" Click="LaunchBtn_Click"/>
-                            <TextBlock Text="The selected profile, loader, version and RAM are used automatically." Foreground="#505762" FontSize="9" HorizontalAlignment="Center" Margin="0,9,0,0"/>
-                        </StackPanel>
+    <!-- ========================================================= -->
+    <!-- CARD -->
+    <!-- ========================================================= -->
 
-                        <StackPanel x:Name="TabProfiles" Visibility="Collapsed">
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <StackPanel><TextBlock Text="Management Center" Foreground="White" FontSize="30" FontWeight="Bold"/><TextBlock Text="Profiles, loaders, versions, RAM and mods — all controlled by the active profile." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,5,0,0"/></StackPanel>
-                                <Border Grid.Column="1" Background="#0D251A" BorderBrush="#175A3C" BorderThickness="1" CornerRadius="10" Padding="12,8" VerticalAlignment="Center"><TextBlock Text="●  PROFILE READY" Foreground="{StaticResource Green}" FontSize="9" FontWeight="Bold"/></Border>
-                            </Grid>
-                            <Grid Margin="0,22,0,14">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Style="{StaticResource CardStyle}" Margin="0,0,6,0"><StackPanel><TextBlock Text="PROFILE" Foreground="#606772" FontSize="8" FontWeight="Bold"/><TextBlock x:Name="ManagementProfileLabel" Text="default" FontSize="17" FontWeight="Bold" Margin="0,5,0,0"/><TextBlock Text="Active instance" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,3,0,0"/></StackPanel></Border>
-                                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="6,0,6,0"><StackPanel><TextBlock Text="RUNTIME" Foreground="#606772" FontSize="8" FontWeight="Bold"/><TextBlock x:Name="ManagementVersionLabel" Text="Selected version" FontSize="17" FontWeight="Bold" Margin="0,5,0,0"/><TextBlock x:Name="ManagementLoaderLabel" Text="Selected loader" Foreground="{StaticResource Green}" FontSize="9" Margin="0,3,0,0"/></StackPanel></Border>
-                                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="6,0,0,0"><StackPanel><TextBlock Text="ALLOCATED RAM" Foreground="#606772" FontSize="8" FontWeight="Bold"/><TextBlock x:Name="ManagementRamLabel" Text="Selected RAM" FontSize="17" FontWeight="Bold" Foreground="{StaticResource Green}" Margin="0,5,0,0"/><TextBlock Text="Per-profile setting" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,3,0,0"/></StackPanel></Border>
-                            </Grid>
+    <Style x:Key="CardStyle"
+           TargetType="Border">
+        <Setter Property="Background"
+                Value="{StaticResource CardBackground}"/>
+        <Setter Property="BorderBrush"
+                Value="{StaticResource CardBorder}"/>
+        <Setter Property="BorderThickness"
+                Value="1"/>
+        <Setter Property="CornerRadius"
+                Value="12"/>
+        <Setter Property="Padding"
+                Value="16"/>
+    </Style>
 
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
-                                <StackPanel>
-                                    <TextBlock Text="PROFILE SETTINGS" Foreground="#626974" FontSize="9" FontWeight="Bold" Margin="0,0,0,12"/>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="190"/><ColumnDefinition Width="230"/></Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,18,0"><TextBlock Text="ACTIVE PROFILE" Foreground="#9DA4AE" FontSize="9"/><ComboBox x:Name="ProfileSelector" Style="{StaticResource Combo}" SelectionChanged="ProfileSelector_SelectionChanged" Margin="0,5,0,0"/><StackPanel Orientation="Horizontal" Margin="0,7,0,0"><TextBox x:Name="NewProfileInput" Style="{StaticResource Input}" Height="32" ToolTip="New profile name"/><Button Content="+ New" Width="68" Height="32" Margin="7,0,0,0" Style="{StaticResource ButtonBase}" Click="CreateProfile_Click"/><Button Content="Delete" Width="68" Height="32" Margin="7,0,0,0" Style="{StaticResource ButtonBase}" Click="DeleteProfile_Click"/></StackPanel></StackPanel>
-                                        <StackPanel Grid.Column="1" Margin="0,0,18,0"><TextBlock Text="MINECRAFT VERSION" Foreground="#9DA4AE" FontSize="9"/><ComboBox x:Name="VersionBox" SelectedIndex="0" Style="{StaticResource Combo}" Margin="0,5,0,0"><ComboBoxItem Content="1.21.1"/><ComboBoxItem Content="1.21.4"/><ComboBoxItem Content="1.21.8"/><ComboBoxItem Content="1.21.11"/><ComboBoxItem Content="26.1.2"/><ComboBoxItem Content="26.2"/></ComboBox></StackPanel>
-                                        <StackPanel Grid.Column="2"><TextBlock Text="ALLOCATED RAM" Foreground="#9DA4AE" FontSize="9"/><StackPanel Orientation="Horizontal" Margin="0,9,0,0"><Slider x:Name="RamSlider" Width="165" Minimum="2" Maximum="12" Value="4" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="RamSlider_ValueChanged" VerticalAlignment="Center"/><TextBlock x:Name="RamLabel" Text="4GB" Foreground="{StaticResource Green}" FontWeight="Bold" Margin="12,0,0,0" VerticalAlignment="Center"/></StackPanel></StackPanel>
-                                    </Grid>
-                                    <StackPanel Orientation="Horizontal" Margin="0,15,0,0"><Button Content="Save Profile Settings" Width="175" Height="36" Style="{StaticResource GreenButton}" Click="SaveProfile_Click"/><TextBlock x:Name="SelectedProfileLabel" Text="Selected profile" Foreground="{StaticResource Green}" FontSize="10" VerticalAlignment="Center" Margin="14,0,0,0"/></StackPanel>
-                                </StackPanel>
-                            </Border>
+    <!-- ========================================================= -->
+    <!-- MODERN BUTTON -->
+    <!-- ========================================================= -->
 
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
-                                <StackPanel>
-                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="MODRINTH DISCOVERY" Foreground="#626974" FontSize="9" FontWeight="Bold"/><TextBlock Text="Find compatible mods for the active profile." Foreground="White" FontSize="15" FontWeight="Bold" Margin="0,4,0,0"/></StackPanel><Border Grid.Column="1" Background="#0C2118" BorderBrush="#164D34" BorderThickness="1" CornerRadius="8" Padding="9,5"><TextBlock Text="MODS + PERFORMANCE" Foreground="{StaticResource Green}" FontSize="8" FontWeight="Bold"/></Border></Grid>
-                                    <Grid Margin="0,14,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="ModSearchInput" Style="{StaticResource Input}" Height="38" ToolTip="Search Modrinth"/><Button Grid.Column="1" Content="Search &amp; Add" Width="125" Height="38" Margin="9,0,0,0" Style="{StaticResource GreenButton}" Click="SearchModrinth_Click"/></Grid>
-                                    <TextBlock x:Name="ModSearchStatus" Text="Search a mod and Topu will install a compatible version." Foreground="{StaticResource Muted}" FontSize="9" Margin="0,8,0,0"/>
-                                </StackPanel>
-                            </Border>
+    <Style x:Key="ModernButton"
+           TargetType="Button">
+        <Setter Property="Background"
+                Value="#22252B"/>
+        <Setter Property="Foreground"
+                Value="White"/>
+        <Setter Property="BorderBrush"
+                Value="#343840"/>
+        <Setter Property="BorderThickness"
+                Value="1"/>
+        <Setter Property="Padding"
+                Value="12,7"/>
+        <Setter Property="FontWeight"
+                Value="SemiBold"/>
+        <Setter Property="Cursor"
+                Value="Hand"/>
 
-                            <TextBlock Text="PERFORMANCE PROFILES" Foreground="#626974" FontSize="9" FontWeight="Bold" Margin="2,2,0,8"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <Border Style="{StaticResource CardStyle}" Margin="0,0,6,0"><StackPanel><TextBlock Text="⚡  MAX FPS" Foreground="{StaticResource Green}" FontSize="12" FontWeight="Bold"/><TextBlock Text="Aggressive performance focus" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,5,0,0"/><TextBlock Text="Compatible performance stack" Foreground="#9BA2AC" FontSize="8" Margin="0,8,0,0"/></StackPanel></Border>
-                                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="6,0,6,0"><StackPanel><TextBlock Text="🎯  COMPETITIVE" Foreground="White" FontSize="12" FontWeight="Bold"/><TextBlock Text="FPS + visibility balance" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,5,0,0"/><TextBlock Text="PvP focused configuration" Foreground="#9BA2AC" FontSize="8" Margin="0,8,0,0"/></StackPanel></Border>
-                                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="6,0,0,0"><StackPanel><TextBlock Text="◇  QUALITY" Foreground="White" FontSize="12" FontWeight="Bold"/><TextBlock Text="Performance with visuals" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,5,0,0"/><TextBlock Text="Balanced graphics profile" Foreground="#9BA2AC" FontSize="8" Margin="0,8,0,0"/></StackPanel></Border>
-                            </Grid>
-                        </StackPanel>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
 
-                        <StackPanel x:Name="TabAccounts" Visibility="Collapsed">
-                            <TextBlock Text="Accounts" Foreground="White" FontSize="30" FontWeight="Bold"/>
-                            <TextBlock Text="Manage offline and Microsoft accounts from the main launcher." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,5,0,22"/>
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="SELECTED ACCOUNT" Foreground="#626974" FontSize="9" FontWeight="Bold"/><TextBlock x:Name="SelectedAccountLabel" Text="No account selected" Foreground="White" FontSize="21" FontWeight="Bold" Margin="0,5,0,0"/><TextBlock x:Name="SelectedAccountTypeLabel" Text="Add an account below" Foreground="{StaticResource Green}" FontSize="10" Margin="0,3,0,0"/></StackPanel><TextBlock Grid.Column="1" Text="●" Foreground="{StaticResource Green}" FontSize="22" VerticalAlignment="Center"/></Grid></Border>
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14"><StackPanel><TextBlock Text="SAVED ACCOUNTS" Foreground="#626974" FontSize="9" FontWeight="Bold"/><ComboBox x:Name="AccountSelector" Height="38" Style="{StaticResource Combo}" SelectionChanged="AccountSelector_SelectionChanged" Margin="0,8,0,0"/><Button Content="Remove Selected Account" Width="190" Height="34" HorizontalAlignment="Left" Margin="0,9,0,0" Style="{StaticResource ButtonBase}" Click="RemoveAccount_Click"/></StackPanel></Border>
-                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14"><StackPanel><TextBlock Text="OFFLINE" Foreground="#626974" FontSize="9" FontWeight="Bold"/><TextBlock Text="Add a username once. Topu Client remembers it for future launches." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,4,0,10"/><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="OfflineUsernameInput" Style="{StaticResource Input}" Height="36" ToolTip="Minecraft username"/><Button Grid.Column="1" Content="Add Offline Account" Width="160" Height="36" Margin="10,0,0,0" Style="{StaticResource GreenButton}" Click="AddOfflineAccount_Click"/></Grid></StackPanel></Border>
-                            <Border Style="{StaticResource CardStyle}"><StackPanel><TextBlock Text="MICROSOFT ACCOUNT" Foreground="#626974" FontSize="9" FontWeight="Bold"/><TextBlock Text="Use Microsoft account. Your saved Microsoft account can be selected again without logging in every launch." Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,12"/><Button x:Name="MsLoginBtn" Content="Sign in with Microsoft" Width="190" Height="38" Background="#1683D8" Foreground="White" BorderBrush="#1683D8" FontWeight="Bold" HorizontalAlignment="Left" Style="{StaticResource ModernButton}" Click="MsLoginBtn_Click"/></StackPanel></Border>
-                        </StackPanel>
-                    </Grid>
-                </ScrollViewer>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}">
+
+                        <ContentPresenter
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+
+                    </Border>
+
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <Style.Triggers>
+
+            <Trigger Property="IsMouseOver"
+                     Value="True">
+                <Setter Property="Background"
+                        Value="#2B2F36"/>
+                <Setter Property="BorderBrush"
+                        Value="#454A54"/>
+            </Trigger>
+
+            <Trigger Property="IsPressed"
+                     Value="True">
+                <Setter Property="Background"
+                        Value="#17191D"/>
+            </Trigger>
+
+            <Trigger Property="IsEnabled"
+                     Value="False">
+                <Setter Property="Opacity"
+                        Value="0.45"/>
+            </Trigger>
+
+        </Style.Triggers>
+
+    </Style>
+
+    <!-- ========================================================= -->
+    <!-- GREEN BUTTON -->
+    <!-- ========================================================= -->
+
+    <Style x:Key="GreenButton"
+           TargetType="Button"
+           BasedOn="{StaticResource ModernButton}">
+
+        <Setter Property="Background"
+                Value="{StaticResource TopuGreen}"/>
+
+        <Setter Property="Foreground"
+                Value="#07100B"/>
+
+        <Setter Property="BorderBrush"
+                Value="{StaticResource TopuGreen}"/>
+
+        <Setter Property="FontWeight"
+                Value="Bold"/>
+
+        <Style.Triggers>
+
+            <Trigger Property="IsMouseOver"
+                     Value="True">
+                <Setter Property="Background"
+                        Value="#33FF9F"/>
+                <Setter Property="BorderBrush"
+                        Value="#33FF9F"/>
+            </Trigger>
+
+        </Style.Triggers>
+
+    </Style>
+
+    <!-- ========================================================= -->
+    <!-- INPUT -->
+    <!-- ========================================================= -->
+
+    <Style x:Key="ModernTextBox"
+           TargetType="TextBox">
+
+        <Setter Property="Background"
+                Value="{StaticResource InputBackground}"/>
+
+        <Setter Property="Foreground"
+                Value="White"/>
+
+        <Setter Property="BorderBrush"
+                Value="{StaticResource InputBorder}"/>
+
+        <Setter Property="BorderThickness"
+                Value="1"/>
+
+        <Setter Property="Padding"
+                Value="10,6"/>
+
+        <Setter Property="Height"
+                Value="36"/>
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center"/>
+
+    </Style>
+
+    <!-- ========================================================= -->
+    <!-- COMBOBOX -->
+    <!-- ========================================================= -->
+
+    <Style x:Key="ModernComboBox"
+           TargetType="ComboBox">
+
+        <Setter Property="Background"
+                Value="{StaticResource InputBackground}"/>
+
+        <Setter Property="Foreground"
+                Value="White"/>
+
+        <Setter Property="BorderBrush"
+                Value="{StaticResource InputBorder}"/>
+
+        <Setter Property="BorderThickness"
+                Value="1"/>
+
+        <Setter Property="Height"
+                Value="36"/>
+
+    </Style>
+
+    <!-- ========================================================= -->
+    <!-- SIDEBAR -->
+    <!-- ========================================================= -->
+
+    <Style x:Key="SidebarButton"
+           TargetType="Button">
+
+        <Setter Property="Background"
+                Value="Transparent"/>
+
+        <Setter Property="Foreground"
+                Value="#858A94"/>
+
+        <Setter Property="BorderThickness"
+                Value="0"/>
+
+        <Setter Property="Padding"
+                Value="18,0"/>
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Left"/>
+
+        <Setter Property="FontWeight"
+                Value="SemiBold"/>
+
+        <Setter Property="Cursor"
+                Value="Hand"/>
+
+        <Setter Property="Template">
+
+            <Setter.Value>
+
+                <ControlTemplate TargetType="Button">
+
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+
+                        <ContentPresenter
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+
+                    </Border>
+
+                </ControlTemplate>
+
+            </Setter.Value>
+
+        </Setter>
+
+        <Style.Triggers>
+
+            <Trigger Property="IsMouseOver"
+                     Value="True">
+
+                <Setter Property="Background"
+                        Value="#1D2025"/>
+
+                <Setter Property="Foreground"
+                        Value="#DCE1E8"/>
+
+            </Trigger>
+
+        </Style.Triggers>
+
+    </Style>
+
+</Window.Resources>
+
+<Border Background="{StaticResource WindowBackground}"
+        CornerRadius="14"
+        BorderBrush="#30343B"
+        BorderThickness="1">
+
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="46"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="34"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===================================================== -->
+        <!-- TITLE BAR -->
+        <!-- ===================================================== -->
+
+        <Border Grid.Row="0"
+                Background="#15171B"
+                CornerRadius="14,14,0,0"
+                MouseDown="TitleBar_MouseDown">
+
+            <Grid>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="18,0,0,0">
+
+                    <Border Width="26"
+                            Height="26"
+                            CornerRadius="7"
+                            Background="#0B2C1C"
+                            BorderBrush="#164D32"
+                            BorderThickness="1"
+                            Margin="0,0,9,0">
+
+                        <TextBlock Text="⚡"
+                                   Foreground="{StaticResource TopuGreen}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="13"/>
+
+                    </Border>
+
+                    <TextBlock Text="TOPU CLIENT"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               VerticalAlignment="Center"/>
+
+                    <TextBlock Text="  •  PvP Edition"
+                               Foreground="#626872"
+                               FontSize="11"
+                               VerticalAlignment="Center"/>
+
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal">
+
+                    <Button Content="—"
+                            Width="45"
+                            Height="46"
+                            Background="Transparent"
+                            Foreground="#858A94"
+                            BorderThickness="0"
+                            FontSize="16"
+                            Click="Minimize_Click"/>
+
+                    <Button Content="✕"
+                            Width="45"
+                            Height="46"
+                            Background="Transparent"
+                            Foreground="#858A94"
+                            BorderThickness="0"
+                            FontSize="14"
+                            Click="Close_Click"/>
+
+                </StackPanel>
+
             </Grid>
 
-            <Border Grid.Row="2" Background="#0C0E11" BorderBrush="#24272D" BorderThickness="0,1,0,0" Padding="14,0">
-                <Grid><TextBlock x:Name="StatusText" Text="Ready." Foreground="#777D88" VerticalAlignment="Center" FontSize="10"/><TextBlock Text="TOPU CLIENT" Foreground="#444951" FontSize="9" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+        </Border>
+
+        <!-- ===================================================== -->
+        <!-- MAIN -->
+        <!-- ===================================================== -->
+
+        <Grid Grid.Row="1">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="210"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ================================================= -->
+            <!-- SIDEBAR -->
+            <!-- ================================================= -->
+
+            <Border Grid.Column="0"
+                    Background="{StaticResource SidebarBackground}"
+                    BorderBrush="#24272D"
+                    BorderThickness="0,0,1,0">
+
+                <Grid>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel>
+
+                        <TextBlock Text="NAVIGATION"
+                                   Foreground="#50555E"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Margin="18,22,18,8"/>
+
+                        <Button x:Name="TabLaunchBtn"
+                                Content="  ⚡   Launch Game"
+                                Height="46"
+                                Style="{StaticResource SidebarButton}"
+                                Foreground="{StaticResource TopuGreen}"
+                                BorderBrush="{StaticResource TopuGreen}"
+                                BorderThickness="3,0,0,0"
+                                Tag="TabLaunch"
+                                Click="SwitchTab_Click"/>
+
+                        <Button x:Name="TabProfilesBtn"
+                                Content="  ◈   Profiles &amp; Mods"
+                                Height="46"
+                                Style="{StaticResource SidebarButton}"
+                                Tag="TabProfiles"
+                                Click="SwitchTab_Click"/>
+
+                        <Button x:Name="TabAccountsBtn"
+                                Content="  ●   Accounts"
+                                Height="46"
+                                Style="{StaticResource SidebarButton}"
+                                Tag="TabAccounts"
+                                Click="SwitchTab_Click"/>
+
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1"
+                                Margin="18,0,18,18">
+
+                        <Border Background="#101216"
+                                BorderBrush="#252931"
+                                BorderThickness="1"
+                                CornerRadius="9"
+                                Padding="10">
+
+                            <StackPanel>
+
+                                <TextBlock Text="TOPU CLIENT"
+                                           Foreground="#5E646E"
+                                           FontSize="9"
+                                           FontWeight="Bold"/>
+
+                                <TextBlock Text="High Performance"
+                                           Foreground="#DCE1E8"
+                                           FontSize="11"
+                                           Margin="0,2,0,0"/>
+
+                                <TextBlock Text="Fabric PvP Launcher"
+                                           Foreground="{StaticResource TopuGreen}"
+                                           FontSize="10"
+                                           Margin="0,1,0,0"/>
+
+                            </StackPanel>
+
+                        </Border>
+
+                    </StackPanel>
+
+                </Grid>
+
             </Border>
+
+            <!-- ================================================= -->
+            <!-- CONTENT -->
+            <!-- ================================================= -->
+
+            <ScrollViewer Grid.Column="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+
+                <Grid Margin="26">
+
+                    <!-- ========================================= -->
+                    <!-- LAUNCH TAB -->
+                    <!-- ========================================= -->
+
+                    <StackPanel x:Name="TabLaunch"
+                                Visibility="Visible">
+
+                        <TextBlock Text="Launch Game"
+                                   Foreground="White"
+                                   FontSize="26"
+                                   FontWeight="Bold"/>
+
+                        <TextBlock Text="Ready for competitive Minecraft."
+                                   Foreground="{StaticResource MutedText}"
+                                   FontSize="12"
+                                   Margin="0,5,0,22"/>
+
+                        <!-- ACCOUNT CARD -->
+
+                        <Border Style="{StaticResource CardStyle}"
+                                Margin="0,0,0,14">
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel>
+
+                                    <TextBlock Text="ACCOUNT"
+                                               Foreground="#666C76"
+                                               FontSize="10"
+                                               FontWeight="Bold"/>
+
+                                    <TextBlock x:Name="LaunchAccountLabel"
+                                               Text="No account"
+                                               Foreground="White"
+                                               FontSize="20"
+                                               FontWeight="Bold"
+                                               Margin="0,4,0,0"/>
+
+                                    <TextBlock x:Name="LaunchAccountTypeLabel"
+                                               Text="Add an account in Accounts"
+                                               Foreground="{StaticResource TopuGreen}"
+                                               FontSize="11"
+                                               Margin="0,2,0,0"/>
+
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="●"
+                                           Foreground="{StaticResource TopuGreen}"
+                                           FontSize="20"
+                                           VerticalAlignment="Center"/>
+
+                            </Grid>
+
+                        </Border>
+
+                        <!-- PROFILE CARD -->
+
+                        <Border Style="{StaticResource CardStyle}"
+                                Margin="0,0,0,18">
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel>
+
+                                    <TextBlock Text="ACTIVE PROFILE"
+                                               Foreground="#666C76"
+                                               FontSize="10"
+                                               FontWeight="Bold"/>
+
+                                    <TextBlock x:Name="LaunchProfileLabel"
+                                               Text="default"
+                                               Foreground="White"
+                                               FontSize="20"
+                                               FontWeight="Bold"
+                                               Margin="0,4,0,0"/>
+
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="0,4,0,0">
+
+                                        <TextBlock Text="Fabric"
+                                                   Foreground="{StaticResource TopuGreen}"
+                                                   FontSize="11"/>
+
+                                        <TextBlock Text="  •  "
+                                                   Foreground="#555A63"
+                                                   FontSize="11"/>
+
+                                        <TextBlock x:Name="LaunchVersionLabel"
+                                                   Text="1.21.1"
+                                                   Foreground="#A8ADB7"
+                                                   FontSize="11"/>
+
+                                        <TextBlock Text="  •  "
+                                                   Foreground="#555A63"
+                                                   FontSize="11"/>
+
+                                        <TextBlock x:Name="LaunchRamLabel"
+                                                   Text="4GB RAM"
+                                                   Foreground="#A8ADB7"
+                                                   FontSize="11"/>
+
+                                    </StackPanel>
+
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="◈"
+                                           Foreground="{StaticResource TopuGreen}"
+                                           FontSize="22"
+                                           VerticalAlignment="Center"/>
+
+                            </Grid>
+
+                        </Border>
+
+                        <TextBlock Text="QUICK SERVER CONNECT"
+                                   Foreground="#666C76"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,8"/>
+
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="0,0,0,22">
+
+                            <Button Content="GamerTee"
+                                    Width="115"
+                                    Height="36"
+                                    Margin="0,0,10,0"
+                                    Style="{StaticResource ModernButton}"
+                                    Tag="gametee.net"
+                                    Click="JoinServer_Click"/>
+
+                            <Button Content="Sharpness.gg"
+                                    Width="125"
+                                    Height="36"
+                                    Style="{StaticResource ModernButton}"
+                                    Tag="sharpness.gg"
+                                    Click="JoinServer_Click"/>
+
+                        </StackPanel>
+
+                        <Button x:Name="LaunchBtn"
+                                Content="⚡   LAUNCH FABRIC"
+                                Height="52"
+                                Style="{StaticResource GreenButton}"
+                                FontSize="14"
+                                Click="LaunchBtn_Click"/>
+
+                        <TextBlock Text="Your selected account and profile will be used automatically."
+                                   Foreground="#555A63"
+                                   FontSize="10"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,10,0,0"/>
+
+                    </StackPanel>
+
+                    <!-- ========================================= -->
+                    <!-- PROFILE TAB -->
+                    <!-- ========================================= -->
+
+                    <StackPanel x:Name="TabProfiles"
+                                Visibility="Collapsed">
+
+                        <TextBlock Text="Profiles &amp; Mods"
+                                   Foreground="White"
+                                   FontSize="26"
+                                   FontWeight="Bold"/>
+
+                        <TextBlock Text="Every profile has its own Minecraft installation, mods, worlds and settings."
+                                   Foreground="{StaticResource MutedText}"
+                                   FontSize="12"
+                                   Margin="0,5,0,20"/>
+
+                        <!-- PROFILE SELECTOR -->
+
+                        <Border Style="{StaticResource CardStyle}"
+                                Margin="0,0,0,14">
+
+                            <StackPanel>
+
+                                <TextBlock Text="ACTIVE PROFILE"
+                                           Foreground="#666C76"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Margin="0,0,0,7"/>
+
+                                <Grid>
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox x:Name="ProfileSelector"
+                                              Style="{StaticResource ModernComboBox}"
+                                              SelectionChanged="ProfileSelector_SelectionChanged"/>
+
+                                    <Button Grid.Column="1"
+                                            Content="+ New"
+                                            Height="36"
+                                            Width="75"
+                                            Margin="8,0,0,0"
+                                            Style="{StaticResource ModernButton}"
+                                            Click="CreateProfile_Click"/>
+
+                                    <Button Grid.Column="2"
+                                            Content="Delete"
+                                            Height="36"
+                                            Width="75"
+                                            Margin="8,0,0,0"
+                                            Style="{StaticResource ModernButton}"
+                                            Click="DeleteProfile_Click"/>
+
+                                </Grid>
+
+                                <Grid Margin="0,9,0,0">
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox x:Name="NewProfileInput"
+                                             Style="{StaticResource ModernTextBox}"
+                                             Height="32"
+                                             ToolTip="New profile name"/>
+
+                                    <TextBlock Grid.Column="1"
+                                               Text="Example: pvp, survival, testing"
+                                               Foreground="#555A63"
+                                               FontSize="10"
+                                               VerticalAlignment="Center"
+                                               Margin="10,0,0,0"/>
+
+                                </Grid>
+
+                            </StackPanel>
+
+                        </Border>
+
+                        <!-- SETTINGS -->
+
+                        <Border Style="{StaticResource CardStyle}"
+                                Margin="0,0,0,14">
+
+                            <StackPanel>
+
+                                <TextBlock Text="PROFILE SETTINGS"
+                                           Foreground="#666C76"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Margin="0,0,0,12"/>
+
+                                <Grid>
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="190"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+
+                                        <TextBlock Text="Minecraft Version"
+                                                   Foreground="#C8CDD5"
+                                                   FontSize="11"
+                                                   Margin="0,0,0,6"/>
+
+                                        <ComboBox x:Name="VersionBox"
+                                                  Width="170"
+                                                  Height="34"
+                                                  SelectedIndex="0"
+                                                  HorizontalAlignment="Left"
+                                                  Style="{StaticResource ModernComboBox}">
+
+                                            <ComboBoxItem Content="1.21.1"/>
+                                            <ComboBoxItem Content="1.21.4"/>
+                                            <ComboBoxItem Content="1.21.8"/>
+                                            <ComboBoxItem Content="1.21.11"/>
+                                            <ComboBoxItem Content="26.1.2"/>
+                                            <ComboBoxItem Content="26.2"/>
+
+                                        </ComboBox>
+
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1">
+
+                                        <TextBlock Text="Allocated RAM"
+                                                   Foreground="#C8CDD5"
+                                                   FontSize="11"
+                                                   Margin="0,0,0,6"/>
+
+                                        <StackPanel Orientation="Horizontal">
+
+                                            <Slider x:Name="RamSlider"
+                                                    Width="230"
+                                                    Minimum="2"
+                                                    Maximum="12"
+                                                    Value="4"
+                                                    TickFrequency="1"
+                                                    IsSnapToTickEnabled="True"
+                                                    ValueChanged="RamSlider_ValueChanged"
+                                                    VerticalAlignment="Center"/>
+
+                                            <TextBlock x:Name="RamLabel"
+                                                       Text="4GB"
+                                                       Foreground="{StaticResource TopuGreen}"
+                                                       FontWeight="Bold"
+                                                       Margin="12,0,0,0"
+                                                       VerticalAlignment="Center"/>
+
+                                        </StackPanel>
+
+                                    </StackPanel>
+
+                                </Grid>
+
+                                <Button Content="Save Profile Settings"
+                                        Width="170"
+                                        Height="36"
+                                        Margin="0,18,0,0"
+                                        Style="{StaticResource GreenButton}"
+                                        HorizontalAlignment="Left"
+                                        Click="SaveProfile_Click"/>
+
+                                <TextBlock x:Name="SelectedProfileLabel"
+                                           Text="● default • Fabric 1.21.1 • 4GB RAM"
+                                           Foreground="{StaticResource TopuGreen}"
+                                           FontSize="11"
+                                           Margin="0,12,0,0"/>
+
+                            </StackPanel>
+
+                        </Border>
+
+                        <!-- MOD MANAGER -->
+
+                        <Border Style="{StaticResource CardStyle}">
+
+                            <StackPanel>
+
+                                <TextBlock Text="MODRINTH MOD MANAGER"
+                                           Foreground="#666C76"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Margin="0,0,0,10"/>
+
+                                <Grid>
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox x:Name="ModSearchInput"
+                                             Style="{StaticResource ModernTextBox}"
+                                             Height="36"/>
+
+                                    <Button Grid.Column="1"
+                                            Content="Search &amp; Add"
+                                            Width="125"
+                                            Height="36"
+                                            Margin="10,0,0,0"
+                                            Style="{StaticResource GreenButton}"
+                                            Click="SearchModrinth_Click"/>
+
+                                </Grid>
+
+                                <TextBlock x:Name="ModSearchStatus"
+                                           Text="Optimization stack installs automatically."
+                                           Foreground="{StaticResource MutedText}"
+                                           FontSize="10"
+                                           Margin="0,9,0,0"/>
+
+                            </StackPanel>
+
+                        </Border>
+
+                    </StackPanel>
+
+                    <!-- ========================================= -->
+                    <!-- ACCOUNTS TAB -->
+                    <!-- ========================================= -->
+
+                    <StackPanel x:Name="TabAccounts"
+                                Visibility="Collapsed">
+
+                        <TextBlock Text="Accounts"
+                                   Foreground="White"
+                                   FontSize="26"
+                                   FontWeight="Bold"/>
+
+                        <TextBlock Text="Save offline and Microsoft accounts and switch between them whenever you want."
+                                   Foreground="{StaticResource MutedText}"
+                                   FontSize="12"
+                                   Margin="0,5,0,20"/>
+
+                        <!-- CURRENT ACCOUNT -->
+
+                        <Border Style="{StaticResource CardStyle}"
+                                Margin="0,0,0,14">
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel>
+
+                                    <TextBlock Text="SELECTED ACCOUNT"
+                                               Foreground="#666C76"
+                                               FontSize="10"
+                                               FontWeight="Bold"/>
+
+                                    <TextBlock x:Name="SelectedAccountLabel"
+                                               Text="No account selected"
+                                               Foreground="White"
+                                               FontSize="20"
+                                               FontWeight="Bold"
+                                               Margin="0,4,0,0"/>
+
+                                    <TextBlock x:Name="SelectedAccountTypeLabel"
+                                               Text="Add an account below"
+                                               Foreground="{StaticResource TopuGreen}"
+                                               FontSize="11"
+                                               Margin="0,2,0,0"/>
+
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="●"
+                                           Foreground="{StaticResource TopuGreen}"
+                                           FontSize="20"
+                                           VerticalAlignment="Center"/>
+
+                            </Grid>
+
+                        </Border>
+
+                        <!-- ACCOUNT SELECTOR -->
+
+                        <Border Style="{StaticResource CardStyle}"
+                                Margin="0,0,0,14">
+
+                            <StackPanel>
+
+                                <TextBlock Text="SAVED ACCOUNTS"
+                                           Foreground="#666C76"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Margin="0,0,0,8"/>
+
+                                <ComboBox x:Name="AccountSelector"
+                                          Height="38"
+                                          Style="{StaticResource ModernComboBox}"
+                                          SelectionChanged="AccountSelector_SelectionChanged"/>
+
+                                <Button Content="Remove Selected Account"
+                                        Width="190"
+                                        Height="34"
+                                        Margin="0,9,0,0"
+                                        Style="{StaticResource ModernButton}"
+                                        HorizontalAlignment="Left"
+                                        Click="RemoveAccount_Click"/>
+
+                            </StackPanel>
+
+                        </Border>
+
+                        <!-- OFFLINE -->
+
+                        <Border Style="{StaticResource CardStyle}"
+                                Margin="0,0,0,14">
+
+                            <StackPanel>
+
+                                <TextBlock Text="OFFLINE"
+                                           Foreground="#666C76"
+                                           FontSize="10"
+                                           FontWeight="Bold"/>
+
+                                <TextBlock Text="Add a username once. Topu Client remembers it for future launches."
+                                           Foreground="{StaticResource MutedText}"
+                                           FontSize="11"
+                                           Margin="0,4,0,10"/>
+
+                                <Grid>
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox x:Name="OfflineUsernameInput"
+                                             Style="{StaticResource ModernTextBox}"
+                                             Height="36"
+                                             ToolTip="Minecraft username"/>
+
+                                    <Button Grid.Column="1"
+                                            Content="Add Offline Account"
+                                            Width="160"
+                                            Height="36"
+                                            Margin="10,0,0,0"
+                                            Style="{StaticResource GreenButton}"
+                                            Click="AddOfflineAccount_Click"/>
+
+                                </Grid>
+
+                            </StackPanel>
+
+                        </Border>
+
+                        <!-- MICROSOFT -->
+
+                        <Border Style="{StaticResource CardStyle}">
+
+                            <StackPanel>
+
+                                <TextBlock Text="MICROSOFT ACCOUNT"
+                                           Foreground="#666C76"
+                                           FontSize="10"
+                                           FontWeight="Bold"/>
+
+                                <TextBlock Text="Use Microsoft account . Your saved Microsoft account can be selected again without logging in every launch."
+                                           Foreground="{StaticResource MutedText}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,12"/>
+
+                                <Button x:Name="MsLoginBtn"
+                                        Content="Sign in with Microsoft"
+                                        Width="190"
+                                        Height="38"
+                                        Background="#1683D8"
+                                        Foreground="White"
+                                        BorderBrush="#1683D8"
+                                        FontWeight="Bold"
+                                        HorizontalAlignment="Left"
+                                        Style="{StaticResource ModernButton}"
+                                        Click="MsLoginBtn_Click"/>
+
+                            </StackPanel>
+
+                        </Border>
+
+                    </StackPanel>
+
+                </Grid>
+
+            </ScrollViewer>
+
         </Grid>
-    </Border>
+
+        <!-- ===================================================== -->
+        <!-- FOOTER -->
+        <!-- ===================================================== -->
+
+        <Border Grid.Row="2"
+                Background="#0C0E11"
+                BorderBrush="#24272D"
+                BorderThickness="0,1,0,0"
+                Padding="14,0">
+
+            <Grid>
+
+                <TextBlock x:Name="StatusText"
+                           Text="Ready."
+                           Foreground="#777D88"
+                           VerticalAlignment="Center"
+                           FontSize="10"/>
+
+                <TextBlock Text="TOPU CLIENT"
+                           Foreground="#444951"
+                           FontSize="9"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"/>
+
+            </Grid>
+
+        </Border>
+
+    </Grid>
+
+</Border>
+
 </Window>
