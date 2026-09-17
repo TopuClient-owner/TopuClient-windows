@@ -17,21 +17,30 @@ namespace TopuLauncher
     public partial class MainWindow
     {
         private static readonly HttpClient DynamicVersionHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+        private static readonly bool DynamicVersionBootstrapRegistered = RegisterDynamicVersionBootstrap();
         private CancellationTokenSource? _dynamicVersionCts;
         private bool _dynamicVersionHooksReady;
 
-        static MainWindowDynamicVersionBootstrap()
+        private static bool RegisterDynamicVersionBootstrap()
         {
+            EventManager.RegisterClassHandler(typeof(MainWindow), FrameworkElement.LoadedEvent, new RoutedEventHandler(DynamicVersionWindowLoaded));
+            return true;
+        }
+
+        private static void DynamicVersionWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is not MainWindow window)
+                return;
+            window.Dispatcher.BeginInvoke(new Action(window.InitializeDynamicVersionCatalog), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }
 
         private void InitializeDynamicVersionCatalog()
         {
             if (_dynamicVersionHooksReady || _loaderBox == null || VersionBox == null)
                 return;
-
             _dynamicVersionHooksReady = true;
             _loaderBox.SelectionChanged += DynamicLoaderChanged;
-            Dispatcher.BeginInvoke(new Action(() => _ = RefreshDynamicVersionListAsync()), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            _ = RefreshDynamicVersionListAsync();
         }
 
         private async void DynamicLoaderChanged(object? sender, SelectionChangedEventArgs e)
@@ -45,7 +54,6 @@ namespace TopuLauncher
         {
             if (_loaderBox == null || VersionBox == null)
                 return;
-
             string loader = _loaderBox.SelectedItem?.ToString() ?? "Vanilla";
             string preferred = GetSelectedVersion();
             try
@@ -55,14 +63,11 @@ namespace TopuLauncher
                 string[] versions = await GetDynamicVersionsAsync(loader, _dynamicVersionCts.Token);
                 if (versions.Length == 0)
                     return;
-
                 string saved = GetRuntimeProfile().Version;
                 string target = string.IsNullOrWhiteSpace(saved) ? preferred : saved;
-
                 VersionBox.Items.Clear();
                 foreach (string version in versions)
                     VersionBox.Items.Add(new ComboBoxItem { Content = version });
-
                 int index = Array.FindIndex(versions, v => string.Equals(v, target, StringComparison.OrdinalIgnoreCase));
                 if (index < 0)
                     index = Array.FindIndex(versions, v => string.Equals(v, preferred, StringComparison.OrdinalIgnoreCase));
@@ -71,13 +76,10 @@ namespace TopuLauncher
                 UpdateProfileCard();
                 UpdateLaunchSummary();
             }
-            catch (OperationCanceledException)
-            {
-            }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 WriteException("DYNAMIC VERSION CATALOG ERROR", ex);
-                // Keep the static fallback list already supplied by LoaderRuntime.
             }
         }
 
@@ -94,19 +96,14 @@ namespace TopuLauncher
                     .Where(x => x.Length > 0)
                     .ToArray();
             }
-
             if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
                 return await GetJsonGameVersionsAsync("https://meta.fabricmc.net/v2/versions/game", token);
-
             if (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
                 return await GetJsonGameVersionsAsync("https://meta.quiltmc.org/v3/versions/game", token);
-
             if (loader.Equals("Forge", StringComparison.OrdinalIgnoreCase))
                 return await GetForgeVersionsAsync(token);
-
             if (loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase))
                 return await GetNeoForgeVersionsAsync(token);
-
             return Array.Empty<string>();
         }
 
@@ -128,12 +125,9 @@ namespace TopuLauncher
             using HttpResponseMessage response = await DynamicVersionHttp.GetAsync("https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml", token);
             response.EnsureSuccessStatusCode();
             XDocument doc = XDocument.Parse(await response.Content.ReadAsStringAsync(token));
-            return doc.Descendants("version")
-                .Select(x => x.Value.Split('-')[0])
-                .Where(IsMinecraftVersion)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderByDescending(VersionSortKey)
-                .ToArray();
+            return doc.Descendants("version").Select(x => x.Value.Split('-')[0])
+                .Where(IsMinecraftVersion).Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(VersionSortKey).ToArray();
         }
 
         private async Task<string[]> GetNeoForgeVersionsAsync(CancellationToken token)
