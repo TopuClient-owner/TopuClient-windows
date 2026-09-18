@@ -59,8 +59,12 @@ namespace TopuLauncher
 
                 WriteLog($"{loader} catalog source returned {versions.Length} stable Minecraft versions.");
 
-                string saved = GetRuntimeProfile().Version;
-                string target = !string.IsNullOrWhiteSpace(saved) ? saved : uiPreferred;
+                // When the user changes the loader, the current UI selection is
+                // authoritative. Only use the saved profile version when the
+                // refresh was explicitly requested for that profile.
+                string target = uiPreferred;
+                if (string.IsNullOrWhiteSpace(target))
+                    target = GetRuntimeProfile().Version;
 
                 VersionBox.Items.Clear();
                 foreach (string version in versions)
