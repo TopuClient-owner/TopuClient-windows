@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,7 +11,8 @@ namespace TopuLauncher
     // without creating a second profile/loader implementation.
     internal static class TopuDynamicCatalogUiHook
     {
-        static TopuDynamicCatalogUiHook()
+        [ModuleInitializer]
+        internal static void Initialize()
         {
             EventManager.RegisterClassHandler(
                 typeof(MainWindow),
