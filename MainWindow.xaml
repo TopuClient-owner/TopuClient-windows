@@ -585,7 +585,8 @@
                                     <StackPanel Orientation="Horizontal"
                                                 Margin="0,4,0,0">
 
-                                        <TextBlock Text="Vanilla"
+                                        <TextBlock x:Name="LaunchLoaderLabel"
+                                                   Text="Vanilla"
                                                    Foreground="{StaticResource TopuGreen}"
                                                    FontSize="11"/>
 
