@@ -5026,13 +5026,26 @@ private static readonly HttpClient Http = CreateHttpClient();
                     GetActiveProfileName();
             }
 
-            if (LaunchVersionLabel != null)
+            if (LaunchLoaderLabel != null)
             {
-                LaunchVersionLabel.Text =
-                    GetSelectedVersion();
+                string loader = "Vanilla";
+                try
+                {
+                    string path = GetProfileSettingsPath(_gamePath);
+                    if (File.Exists(path))
+                    {
+                        ProfileSettings settings = JsonSerializer.Deserialize<ProfileSettings>(File.ReadAllText(path))
+                            ?? new ProfileSettings();
+                        if (!string.IsNullOrWhiteSpace(settings.Loader))
+                            loader = settings.Loader;
+                    }
+                }
+                catch { }
+
+                LaunchLoaderLabel.Text = loader;
             }
 
-            if (LaunchRamLabel != null)
+            if (LaunchVersionLabel != null)
             {
                 LaunchRamLabel.Text =
                     $"{(int)RamSlider.Value}GB RAM";
