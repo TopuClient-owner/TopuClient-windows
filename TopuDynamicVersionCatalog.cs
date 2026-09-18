@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -11,15 +12,20 @@ using System.Xml.Linq;
 
 namespace TopuLauncher
 {
-    // Loader-aware version catalog.
+    // The launcher owns the version catalog. There are NO hard-coded
+    // Minecraft version lists here.
     //
-    // IMPORTANT:
-    // /versions/game is NOT a loader compatibility list. It is only the
-    // Minecraft release catalog. Fabric/Quilt therefore have to be checked
-    // against their loader endpoint before a Minecraft version is shown.
+    // Minecraft versions are discovered from the official loader services:
+    // Fabric  -> Fabric Meta
+    // Quilt   -> Quilt Meta
+    // Forge   -> Forge Maven metadata
+    // NeoForge-> NeoForge Maven releases metadata
     //
-    // Forge/NeoForge use their own Maven catalogs. No reduced hard-coded
-    // Minecraft version list is used here.
+    // Loader versions are selected separately at launch. For Fabric/Quilt the
+    // newest STABLE loader that explicitly supports the selected Minecraft
+    // version is used. Forge uses its recommended build (then latest), and
+    // NeoForge installs the current release for that Minecraft branch.
+
     public partial class MainWindow
     {
         private static readonly HttpClient DynamicVersionHttp = CreateDynamicVersionHttp();
@@ -33,7 +39,10 @@ namespace TopuLauncher
 
         private static HttpClient CreateDynamicVersionHttp()
         {
-            HttpClient client = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+            HttpClient client = new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(120)
+            };
             client.DefaultRequestHeaders.UserAgent.ParseAdd("TopuClient/1.0");
             return client;
         }
@@ -63,6 +72,7 @@ namespace TopuLauncher
                 CancellationToken token = _dynamicVersionCts.Token;
 
                 StatusText.Text = $"Loading {loader} Minecraft versions...";
+
                 string[] versions = await GetDynamicVersionsAsync(loader, token);
                 token.ThrowIfCancellationRequested();
 
@@ -70,13 +80,14 @@ namespace TopuLauncher
                     throw new InvalidOperationException(
                         $"The {loader} version service returned no supported Minecraft versions.");
 
-                WriteLog($"{loader} catalog source returned {versions.Length} supported Minecraft versions.");
+                WriteLog($"{loader} catalog returned {versions.Length} Minecraft versions.");
 
-                string target = uiPreferred;
-                if (string.IsNullOrWhiteSpace(target))
-                    target = GetRuntimeProfile().Version;
+                string target = string.IsNullOrWhiteSpace(uiPreferred)
+                    ? GetRuntimeProfile().Version
+                    : uiPreferred;
 
                 VersionBox.Items.Clear();
+
                 foreach (string version in versions)
                     VersionBox.Items.Add(new ComboBoxItem { Content = version });
 
@@ -87,10 +98,9 @@ namespace TopuLauncher
                 VersionBox.SelectedIndex = index >= 0 ? index : 0;
                 VersionBox.IsEnabled = true;
 
-                UpdateProfileCard();
+                UpdateRuntimeProfileCard();
                 UpdateLaunchSummary();
 
-                WriteLog($"Dynamic {loader} catalog loaded: {versions.Length} supported Minecraft versions.");
                 StatusText.Text = $"Loaded {versions.Length} {loader} Minecraft versions.";
             }
             catch (OperationCanceledException)
@@ -99,7 +109,8 @@ namespace TopuLauncher
             catch (Exception ex)
             {
                 WriteException($"DYNAMIC {loader} VERSION CATALOG ERROR", ex);
-                StatusText.Text = $"Could not load {loader} versions. Check your internet connection.";
+                StatusText.Text =
+                    $"Could not load {loader} versions. Check your internet connection.";
             }
         }
 
@@ -123,19 +134,11 @@ namespace TopuLauncher
             }
             else if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
             {
-                versions = await GetLoaderSupportedGameVersionsAsync(
-                    "Fabric",
-                    "https://meta.fabricmc.net/v2/versions/game",
-                    game => $"https://meta.fabricmc.net/v2/versions/loader/{Uri.EscapeDataString(game)}",
-                    token);
+                versions = await GetFabricGameVersionsAsync(token);
             }
             else if (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
             {
-                versions = await GetLoaderSupportedGameVersionsAsync(
-                    "Quilt",
-                    "https://meta.quiltmc.org/v3/versions/game",
-                    game => $"https://meta.quiltmc.org/v3/versions/loader/{Uri.EscapeDataString(game)}",
-                    token);
+                versions = await GetQuiltGameVersionsAsync(token);
             }
             else if (loader.Equals("Forge", StringComparison.OrdinalIgnoreCase))
             {
@@ -159,13 +162,16 @@ namespace TopuLauncher
         private async Task<string[]> GetVanillaGameVersionsAsync(CancellationToken token)
         {
             using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(
-                "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json", token);
+                "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+                token);
+
             response.EnsureSuccessStatusCode();
 
             using JsonDocument doc = JsonDocument.Parse(
                 await response.Content.ReadAsStringAsync(token));
 
-            return doc.RootElement.GetProperty("versions").EnumerateArray()
+            return doc.RootElement.GetProperty("versions")
+                .EnumerateArray()
                 .Where(x => string.Equals(
                     x.GetProperty("type").GetString(),
                     "release",
@@ -177,48 +183,92 @@ namespace TopuLauncher
                 .ToArray();
         }
 
-        private async Task<string[]> GetLoaderSupportedGameVersionsAsync(
-            string loaderName,
-            string gameVersionsUrl,
-            Func<string, string> loaderVersionsUrl,
+        private async Task<string[]> GetFabricGameVersionsAsync(CancellationToken token)
+        {
+            // Fabric Meta's game endpoint is the candidate list. We then
+            // validate EVERY candidate against the loader endpoint and only
+            // keep versions that have at least one stable Fabric Loader.
+            string[] candidates = await GetStableGameCandidatesAsync(
+                "https://meta.fabricmc.net/v2/versions/game",
+                token);
+
+            return await FilterByStableLoaderAsync(
+                candidates,
+                game => "https://meta.fabricmc.net/v2/versions/loader/" +
+                        Uri.EscapeDataString(game),
+                token);
+        }
+
+        private async Task<string[]> GetQuiltGameVersionsAsync(CancellationToken token)
+        {
+            string[] candidates = await GetStableGameCandidatesAsync(
+                "https://meta.quiltmc.org/v3/versions/game",
+                token);
+
+            return await FilterByStableLoaderAsync(
+                candidates,
+                game => "https://meta.quiltmc.org/v3/versions/loader/" +
+                        Uri.EscapeDataString(game),
+                token);
+        }
+
+        private async Task<string[]> GetStableGameCandidatesAsync(
+            string url,
             CancellationToken token)
         {
-            using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(
-                gameVersionsUrl, token);
+            using HttpResponseMessage response =
+                await DynamicVersionHttp.GetAsync(url, token);
+
             response.EnsureSuccessStatusCode();
 
             using JsonDocument doc = JsonDocument.Parse(
                 await response.Content.ReadAsStringAsync(token));
 
-            string[] candidates = doc.RootElement.EnumerateArray()
+            return doc.RootElement
+                .EnumerateArray()
                 .Where(x =>
                     !x.TryGetProperty("stable", out JsonElement stable) ||
-                    stable.GetBoolean())
-                .Select(x => x.GetProperty("version").GetString() ?? "")
+                    stable.ValueKind != JsonValueKind.False)
+                .Select(x => x.TryGetProperty("version", out JsonElement version)
+                    ? version.GetString() ?? ""
+                    : "")
                 .Where(IsMinecraftVersion)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
+        }
 
-            // Only advertise Minecraft versions for which this loader actually
-            // publishes at least one STABLE loader build.
-            using SemaphoreSlim gate = new SemaphoreSlim(4, 4);
-            List<Task<string?>> checks = new List<Task<string?>>(candidates.Length);
+        private async Task<string[]> FilterByStableLoaderAsync(
+            IEnumerable<string> candidates,
+            Func<string, string> loaderVersionsUrl,
+            CancellationToken token)
+        {
+            string[] candidateArray = candidates.ToArray();
 
-            foreach (string gameVersion in candidates)
+            // Do not sequentially wait on 100+ HTTP requests. A small bounded
+            // concurrency keeps the launcher responsive while still checking
+            // the complete catalog.
+            using SemaphoreSlim gate = new SemaphoreSlim(8, 8);
+
+            List<Task<string?>> checks = new List<Task<string?>>(
+                candidateArray.Length);
+
+            foreach (string gameVersion in candidateArray)
+            {
                 checks.Add(CheckStableLoaderGameVersionAsync(
-                    gameVersion, loaderVersionsUrl, gate, token));
+                    gameVersion,
+                    loaderVersionsUrl,
+                    gate,
+                    token));
+            }
 
             string?[] results = await Task.WhenAll(checks);
 
-            string[] supported = results
+            return results
                 .Where(v => !string.IsNullOrWhiteSpace(v))
                 .Select(v => v!)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderByDescending(VersionSortKey, StringComparer.Ordinal)
                 .ToArray();
-
-            WriteLog($"{loaderName}: {supported.Length} Minecraft versions have a stable loader.");
-            return supported;
         }
 
         private async Task<string?> CheckStableLoaderGameVersionAsync(
@@ -228,10 +278,13 @@ namespace TopuLauncher
             CancellationToken token)
         {
             await gate.WaitAsync(token);
+
             try
             {
-                using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(
-                    loaderVersionsUrl(gameVersion), token);
+                using HttpResponseMessage response =
+                    await DynamicVersionHttp.GetAsync(
+                        loaderVersionsUrl(gameVersion),
+                        token);
 
                 if (!response.IsSuccessStatusCode)
                     return null;
@@ -245,7 +298,7 @@ namespace TopuLauncher
                         continue;
 
                     if (!loader.TryGetProperty("stable", out JsonElement stable) ||
-                        !stable.GetBoolean())
+                        stable.ValueKind != JsonValueKind.True)
                         continue;
 
                     if (loader.TryGetProperty("version", out JsonElement version) &&
@@ -261,8 +314,7 @@ namespace TopuLauncher
             }
             catch
             {
-                // A missing/unsupported loader endpoint simply means that
-                // Minecraft version is not supported by this loader.
+                // Unsupported/404 loader branches are simply omitted.
                 return null;
             }
             finally
@@ -273,19 +325,65 @@ namespace TopuLauncher
 
         private async Task<string[]> GetForgeGameVersionsAsync(CancellationToken token)
         {
-            using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(
+            string[] urls =
+            {
                 "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml",
-                token);
-            response.EnsureSuccessStatusCode();
+                "https://files.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
+            };
 
-            XDocument doc = XDocument.Parse(
-                await response.Content.ReadAsStringAsync(token));
+            XDocument? doc = null;
+            Exception? lastError = null;
 
-            return doc.Descendants("version")
-                .Select(x => x.Value)
-                .Select(v => v.Contains('-') ? v[..v.IndexOf('-')] : v)
-                .Where(IsMinecraftVersion)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
+            foreach (string url in urls)
+            {
+                try
+                {
+                    using HttpResponseMessage response =
+                        await DynamicVersionHttp.GetAsync(url, token);
+
+                    if (!response.IsSuccessStatusCode)
+                        continue;
+
+                    doc = XDocument.Parse(
+                        await response.Content.ReadAsStringAsync(token));
+                    break;
+                }
+                catch (Exception ex) when (ex is HttpRequestException ||
+                                           ex is TaskCanceledException ||
+                                           ex is InvalidOperationException ||
+                                           ex is XmlException)
+                {
+                    lastError = ex;
+                }
+            }
+
+            if (doc == null)
+                throw new InvalidOperationException(
+                    "Forge Maven metadata could not be loaded.",
+                    lastError);
+
+            // Forge Maven versions are normally:
+            //   <minecraft-version>-<forge-build>
+            // Example: 1.20.1-47.1.0
+            //
+            // We return UNIQUE Minecraft versions, not just two hand-picked
+            // versions. This restores the full Forge catalog.
+            HashSet<string> versions = new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (string value in doc.Descendants("version").Select(x => x.Value))
+            {
+                int separator = value.LastIndexOf('-');
+
+                string minecraftVersion = separator > 0
+                    ? value[..separator]
+                    : value;
+
+                if (IsMinecraftVersion(minecraftVersion))
+                    versions.Add(minecraftVersion);
+            }
+
+            return versions
                 .OrderByDescending(VersionSortKey, StringComparer.Ordinal)
                 .ToArray();
         }
@@ -295,6 +393,7 @@ namespace TopuLauncher
             using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(
                 "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml",
                 token);
+
             response.EnsureSuccessStatusCode();
 
             XDocument doc = XDocument.Parse(
@@ -303,9 +402,11 @@ namespace TopuLauncher
             HashSet<string> versions = new HashSet<string>(
                 StringComparer.OrdinalIgnoreCase);
 
-            foreach (string loaderVersion in doc.Descendants("version").Select(x => x.Value))
+            foreach (string loaderVersion in
+                     doc.Descendants("version").Select(x => x.Value))
             {
                 string minecraftVersion = NeoForgeLoaderToMinecraft(loaderVersion);
+
                 if (!string.IsNullOrWhiteSpace(minecraftVersion))
                     versions.Add(minecraftVersion);
             }
@@ -315,14 +416,10 @@ namespace TopuLauncher
                 .ToArray();
         }
 
-        // NeoForge coordinates encode the Minecraft branch:
-        // 21.1.x -> 1.21.1
-        // 20.6.x -> 1.20.6
-        // 26.1.2.x -> 26.1.2
-        // 26.2.x -> 26.2
         private static string NeoForgeLoaderToMinecraft(string loaderVersion)
         {
             string[] parts = loaderVersion.Split('.');
+
             if (parts.Length < 2)
                 return "";
 
@@ -330,26 +427,26 @@ namespace TopuLauncher
                 !int.TryParse(parts[1], out int minor))
                 return "";
 
+            // Modern NeoForge branches:
+            // 26.2.x -> Minecraft 26.2
+            // 26.1.x -> Minecraft 26.1
             if (major >= 26)
-            {
-                if (parts.Length >= 3 &&
-                    int.TryParse(parts[2], out int patch) &&
-                    patch > 0)
-                    return $"{major}.{minor}.{patch}";
-
                 return $"{major}.{minor}";
-            }
 
+            // Legacy NeoForge branches:
+            // 21.1.x -> Minecraft 1.21.1
+            // 20.6.x -> Minecraft 1.20.6
+            // 20.4.x -> Minecraft 1.20.4
+            // 20.2.x -> Minecraft 1.20.2
+            // 20.1.x -> Minecraft 1.20.1
             if (major >= 20)
-                return minor == 0
-                    ? $"1.{major}"
-                    : $"1.{major}.{minor}";
+                return $"{(major >= 20 ? "1." : "")}{major}.{minor}";
 
             return "";
         }
 
-        // Returns the newest stable Fabric Loader that explicitly supports
-        // this Minecraft version.
+        // Newest STABLE Fabric Loader that explicitly supports the selected
+        // Minecraft version.
         private async Task<string> GetStableFabricLoaderVersionAsync(
             string minecraftVersion,
             CancellationToken token)
@@ -358,7 +455,9 @@ namespace TopuLauncher
                 "https://meta.fabricmc.net/v2/versions/loader/" +
                 Uri.EscapeDataString(minecraftVersion);
 
-            using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(url, token);
+            using HttpResponseMessage response =
+                await DynamicVersionHttp.GetAsync(url, token);
+
             response.EnsureSuccessStatusCode();
 
             using JsonDocument doc = JsonDocument.Parse(
@@ -370,12 +469,13 @@ namespace TopuLauncher
                     continue;
 
                 if (!loader.TryGetProperty("stable", out JsonElement stable) ||
-                    !stable.GetBoolean())
+                    stable.ValueKind != JsonValueKind.True)
                     continue;
 
                 if (loader.TryGetProperty("version", out JsonElement version))
                 {
                     string value = version.GetString() ?? "";
+
                     if (!string.IsNullOrWhiteSpace(value))
                         return value;
                 }
@@ -385,8 +485,8 @@ namespace TopuLauncher
                 $"No stable Fabric Loader is available for Minecraft {minecraftVersion}.");
         }
 
-        // Returns the newest stable Quilt Loader that explicitly supports
-        // this Minecraft version.
+        // Newest STABLE Quilt Loader that explicitly supports the selected
+        // Minecraft version.
         private async Task<string> GetStableQuiltLoaderVersionAsync(
             string minecraftVersion,
             CancellationToken token)
@@ -395,7 +495,9 @@ namespace TopuLauncher
                 "https://meta.quiltmc.org/v3/versions/loader/" +
                 Uri.EscapeDataString(minecraftVersion);
 
-            using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(url, token);
+            using HttpResponseMessage response =
+                await DynamicVersionHttp.GetAsync(url, token);
+
             response.EnsureSuccessStatusCode();
 
             using JsonDocument doc = JsonDocument.Parse(
@@ -407,12 +509,13 @@ namespace TopuLauncher
                     continue;
 
                 if (!loader.TryGetProperty("stable", out JsonElement stable) ||
-                    !stable.GetBoolean())
+                    stable.ValueKind != JsonValueKind.True)
                     continue;
 
                 if (loader.TryGetProperty("version", out JsonElement version))
                 {
                     string value = version.GetString() ?? "";
+
                     if (!string.IsNullOrWhiteSpace(value))
                         return value;
                 }
@@ -422,8 +525,9 @@ namespace TopuLauncher
                 $"No stable Quilt Loader is available for Minecraft {minecraftVersion}.");
         }
 
-        // Forge publishes a recommended build for many Minecraft versions.
-        // Use that first; if no recommendation exists, fall back to latest.
+        // Forge exposes a recommended build per Minecraft version. If there
+        // is no recommendation, use its latest build. This is still selected
+        // AFTER the user chooses the Minecraft version.
         private async Task<string?> GetStableForgeLoaderVersionAsync(
             string minecraftVersion,
             CancellationToken token)
@@ -431,33 +535,46 @@ namespace TopuLauncher
             using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(
                 "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json",
                 token);
+
             response.EnsureSuccessStatusCode();
 
             using JsonDocument doc = JsonDocument.Parse(
                 await response.Content.ReadAsStringAsync(token));
 
-            if (!doc.RootElement.TryGetProperty("promos", out JsonElement promos))
+            if (!doc.RootElement.TryGetProperty(
+                    "promos",
+                    out JsonElement promos))
                 return null;
 
             string recommendedKey = minecraftVersion + "-recommended";
-            if (promos.TryGetProperty(recommendedKey, out JsonElement recommended))
+
+            if (promos.TryGetProperty(
+                    recommendedKey,
+                    out JsonElement recommended))
                 return recommended.GetString();
 
             string latestKey = minecraftVersion + "-latest";
-            if (promos.TryGetProperty(latestKey, out JsonElement latest))
+
+            if (promos.TryGetProperty(
+                    latestKey,
+                    out JsonElement latest))
                 return latest.GetString();
 
             return null;
         }
 
-        private async Task PopulateVersionComboAsync(ComboBox combo, string loader)
+        private async Task PopulateVersionComboAsync(
+            ComboBox combo,
+            string loader)
         {
             try
             {
                 string[] versions = await GetDynamicVersionsAsync(
-                    loader, CancellationToken.None);
+                    loader,
+                    CancellationToken.None);
 
                 combo.Items.Clear();
+
                 foreach (string version in versions)
                     combo.Items.Add(new ComboBoxItem { Content = version });
 
@@ -467,7 +584,8 @@ namespace TopuLauncher
             catch (Exception ex)
             {
                 WriteException(
-                    $"CREATE PROFILE {loader} VERSION CATALOG ERROR", ex);
+                    $"CREATE PROFILE {loader} VERSION CATALOG ERROR",
+                    ex);
             }
         }
 
@@ -477,21 +595,32 @@ namespace TopuLauncher
                 return false;
 
             string[] parts = value.Split('.');
-            return parts.Length >= 2 &&
-                   int.TryParse(parts[0], out _) &&
-                   int.TryParse(parts[1], out _);
+
+            if (parts.Length < 2)
+                return false;
+
+            if (!int.TryParse(parts[0], out _) ||
+                !int.TryParse(parts[1], out _))
+                return false;
+
+            // Never put snapshots, prereleases or loader suffixes in the
+            // normal Minecraft selector.
+            return parts.All(part =>
+                part.Length > 0 &&
+                part.All(char.IsDigit));
         }
 
         private static string VersionSortKey(string value)
         {
-            return string.Join(".",
+            return string.Join(
+                ".",
                 value.Split('.').Select(part =>
                 {
                     string digits = new string(
                         part.TakeWhile(char.IsDigit).ToArray());
 
-                    return int.TryParse(digits, out int n)
-                        ? n.ToString("D8")
+                    return int.TryParse(digits, out int number)
+                        ? number.ToString("D8")
                         : "00000000";
                 }));
         }
