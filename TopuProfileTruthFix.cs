@@ -123,6 +123,15 @@ namespace TopuLauncher
 
                 if (LaunchProfileLabel != null)
                     LaunchProfileLabel.Text = profileName;
+
+                if (LaunchLoaderLabel != null)
+                    LaunchLoaderLabel.Text = loader;
+
+                if (LaunchVersionLabel != null)
+                    LaunchVersionLabel.Text = version;
+
+                if (LaunchRamLabel != null)
+                    LaunchRamLabel.Text = $"{ram}GB RAM";
             }
             catch (Exception ex)
             {
