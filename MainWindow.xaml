@@ -33,7 +33,9 @@
 
     <SolidColorBrush x:Key="CardBorder"
                      Color="#262C38"/>
-\n    <DropShadowEffect x:Key="CardShadow" BlurRadius="24" ShadowDepth="0" Opacity="0.28"/>\n
+
+    <DropShadowEffect x:Key="CardShadow" BlurRadius="24" ShadowDepth="0" Opacity="0.28"/>
+
     <SolidColorBrush x:Key="InputBackground"
                      Color="#111318"/>
 
