@@ -111,8 +111,19 @@ namespace TopuLauncher
 
         private void LaunchPreview(object sender, MouseButtonEventArgs e)
         {
-            string loader = GetRuntimeProfile().Loader;
-            if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase) || loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase)) return;
+            RuntimeProfileSettings profile = GetRuntimeProfile();
+            string loader = profile.Loader;
+
+            if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
+            {
+                e.Handled = true;
+                _ = LaunchDynamicFabricAsync(profile);
+                return;
+            }
+
+            if (loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase))
+                return;
+
             e.Handled = true;
             _ = LaunchNonFabricProfileAsync();
         }
@@ -281,9 +292,156 @@ namespace TopuLauncher
             finally{ LaunchBtn.IsEnabled=true; }
         }
 
+        private async Task LaunchDynamicFabricAsync(RuntimeProfileSettings profile)
+        {
+            if (_minecraftProcess != null)
+            {
+                try
+                {
+                    if (!_minecraftProcess.HasExited)
+                    {
+                        MessageBox.Show("Minecraft is already running.", "Topu Client", MessageBoxButton.OK, MessageBoxImage.Information);
+                        return;
+                    }
+                }
+                catch { }
+                _minecraftProcess = null;
+            }
+
+            LaunchBtn.IsEnabled = false;
+            try
+            {
+                string minecraftVersion = profile.Version;
+                int ram = Math.Max(2048, profile.RamGb * 1024);
+
+                StartLaunchLog();
+                WriteLog("===== TOPU DYNAMIC FABRIC LAUNCH =====");
+                WriteLog($"Minecraft: {minecraftVersion}");
+                WriteLog($"Profile: {_gamePath}");
+                WriteLog($"RAM: {ram} MB");
+
+                _session = await AuthenticateSelectedAccountAsync();
+                if (_session == null)
+                    throw new InvalidOperationException("Could not create a Minecraft session.");
+
+                string javaPath = await EnsureJavaAsync(RuntimeJavaMajor("Fabric", minecraftVersion));
+                MinecraftPath minecraftPath = new MinecraftPath(_gamePath);
+                MinecraftLauncher launcher = new MinecraftLauncher(minecraftPath);
+
+                StatusText.Text = $"Installing Minecraft {minecraftVersion}...";
+                await launcher.InstallAsync(minecraftVersion, CancellationToken.None);
+
+                StatusText.Text = $"Finding stable Fabric Loader for {minecraftVersion}...";
+                string loaderVersion = await GetStableFabricLoaderVersionAsync(minecraftVersion, CancellationToken.None);
+                WriteLog($"Selected stable Fabric Loader: {loaderVersion}");
+
+                string profileUrl = "https://meta.fabricmc.net/v2/versions/loader/" +
+                    Uri.EscapeDataString(minecraftVersion) + "/" +
+                    Uri.EscapeDataString(loaderVersion) + "/profile/json";
+
+                using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(profileUrl);
+                response.EnsureSuccessStatusCode();
+                string profileJson = await response.Content.ReadAsStringAsync();
+
+                using JsonDocument profileDoc = JsonDocument.Parse(profileJson);
+                string versionId = profileDoc.RootElement.TryGetProperty("id", out JsonElement idElement) &&
+                    !string.IsNullOrWhiteSpace(idElement.GetString())
+                    ? idElement.GetString()!
+                    : $"fabric-loader-{loaderVersion}-{minecraftVersion}";
+
+                string versionDirectory = Path.Combine(_gamePath, "versions", versionId);
+                Directory.CreateDirectory(versionDirectory);
+                await File.WriteAllTextAsync(Path.Combine(versionDirectory, versionId + ".json"), profileJson);
+
+                if (profileDoc.RootElement.TryGetProperty("libraries", out JsonElement libraries) &&
+                    libraries.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement library in libraries.EnumerateArray())
+                    {
+                        if (!library.TryGetProperty("name", out JsonElement nameElement))
+                            continue;
+
+                        string coordinate = nameElement.GetString() ?? "";
+                        if (string.IsNullOrWhiteSpace(coordinate))
+                            continue;
+
+                        string? url = null;
+                        if (library.TryGetProperty("downloads", out JsonElement downloads) &&
+                            downloads.TryGetProperty("artifact", out JsonElement artifact) &&
+                            artifact.TryGetProperty("url", out JsonElement artifactUrl))
+                            url = artifactUrl.GetString();
+
+                        if (string.IsNullOrWhiteSpace(url) &&
+                            library.TryGetProperty("url", out JsonElement libraryUrl))
+                            url = libraryUrl.GetString();
+
+                        string relative = MavenRelativePath(coordinate);
+                        if (string.IsNullOrWhiteSpace(url))
+                            url = "https://maven.fabricmc.net/" + relative.Replace('\\', '/');
+
+                        string destination = Path.Combine(_gamePath, "libraries", relative);
+                        if (!File.Exists(destination) || new FileInfo(destination).Length == 0)
+                            await DownloadFileAsync(url, destination);
+                    }
+                }
+
+                await InstallUniversalPerformancePackAsync("Fabric", minecraftVersion);
+                await launcher.InstallAsync(versionId, CancellationToken.None);
+
+                MLaunchOption options = new MLaunchOption
+                {
+                    Session = _session,
+                    MaximumRamMb = ram,
+                    MinimumRamMb = Math.Min(1024, ram),
+                    JavaPath = javaPath,
+                    GameLauncherName = "Topu Client",
+                    GameLauncherVersion = "1.0.0"
+                };
+
+                StatusText.Text = $"Building Fabric {minecraftVersion} process...";
+                Process process = await launcher.BuildProcessAsync(versionId, options, CancellationToken.None);
+                if (process == null)
+                    throw new InvalidOperationException("CmlLib returned a null Minecraft process.");
+
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.OutputDataReceived += Minecraft_OutputDataReceived;
+                process.ErrorDataReceived += Minecraft_ErrorDataReceived;
+
+                WriteLog($"Loader version: {loaderVersion}");
+                WriteLog($"Version profile: {versionId}");
+                WriteLog($"Executable: {process.StartInfo.FileName}");
+                WriteLog($"Arguments: {process.StartInfo.Arguments}");
+                WriteDebugFile(process, javaPath, minecraftVersion, versionId, ram);
+
+                StatusText.Text = $"Starting Fabric {minecraftVersion}...";
+                if (!process.Start())
+                    throw new InvalidOperationException("Windows failed to start Minecraft.");
+
+                _minecraftProcess = process;
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                StatusText.Text = $"Topu Client running as {_session.Username}";
+                _ = MonitorMinecraftAsync(process);
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = "Launch failed.";
+                WriteException("TOPU DYNAMIC FABRIC LAUNCH ERROR", ex);
+                MessageBox.Show("Minecraft failed to launch.\n\n" + ex.Message + "\n\nLog:\n" + _logPath,
+                    "Topu Client", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                LaunchBtn.IsEnabled = true;
+            }
+        }
+
         private async Task<string> InstallQuiltRuntimeAsync(string minecraftVersion)
         {
-            string versionsUrl="https://meta.quiltmc.org/v3/versions/loader/"+Uri.EscapeDataString(minecraftVersion); using HttpResponseMessage versionsResponse=await Http.GetAsync(versionsUrl); versionsResponse.EnsureSuccessStatusCode(); string versionsJson=await versionsResponse.Content.ReadAsStringAsync(); using JsonDocument versionsDoc=JsonDocument.Parse(versionsJson); JsonElement root=versionsDoc.RootElement; if(root.ValueKind!=JsonValueKind.Array||root.GetArrayLength()==0) throw new InvalidOperationException($"No Quilt Loader version was found for Minecraft {minecraftVersion}."); JsonElement selected=root[0]; string loaderVersion=selected.GetProperty("loader").GetProperty("version").GetString()??throw new InvalidOperationException("Quilt Loader version was missing.");
+            string loaderVersion=await GetStableQuiltLoaderVersionAsync(minecraftVersion, CancellationToken.None);
             string profileUrl="https://meta.quiltmc.org/v3/versions/loader/"+Uri.EscapeDataString(minecraftVersion)+"/"+Uri.EscapeDataString(loaderVersion)+"/profile/json"; using HttpResponseMessage profileResponse=await Http.GetAsync(profileUrl); profileResponse.EnsureSuccessStatusCode(); string profileJson=await profileResponse.Content.ReadAsStringAsync(); using JsonDocument profileDoc=JsonDocument.Parse(profileJson); string id=profileDoc.RootElement.TryGetProperty("id",out JsonElement idElement)?idElement.GetString()??$"quilt-loader-{loaderVersion}-{minecraftVersion}":$"quilt-loader-{loaderVersion}-{minecraftVersion}";
             using(JsonDocument sourceDoc=JsonDocument.Parse(profileJson)){ Dictionary<string,JsonElement> profile=new Dictionary<string,JsonElement>(); foreach(JsonProperty property in sourceDoc.RootElement.EnumerateObject()) profile[property.Name]=property.Value.Clone(); profile["inheritsFrom"]=JsonDocument.Parse(JsonSerializer.Serialize(minecraftVersion)).RootElement.Clone(); profile["jar"]=JsonDocument.Parse(JsonSerializer.Serialize(minecraftVersion)).RootElement.Clone(); profileJson=JsonSerializer.Serialize(profile,new JsonSerializerOptions{WriteIndented=true}); }
             string versionDirectory=Path.Combine(_gamePath,"versions",id); Directory.CreateDirectory(versionDirectory); string jsonPath=Path.Combine(versionDirectory,id+".json"); await File.WriteAllTextAsync(jsonPath,profileJson);
