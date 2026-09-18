@@ -310,6 +310,23 @@ namespace TopuLauncher
                 $"No stable Quilt Loader is available for Minecraft {minecraftVersion}.");
         }
 
+        private async Task PopulateVersionComboAsync(ComboBox combo, string loader)
+        {
+            try
+            {
+                string[] versions = await GetDynamicVersionsAsync(loader, CancellationToken.None);
+                combo.Items.Clear();
+                foreach (string version in versions)
+                    combo.Items.Add(new ComboBoxItem { Content = version });
+                if (combo.Items.Count > 0)
+                    combo.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                WriteException($"CREATE PROFILE {loader} VERSION CATALOG ERROR", ex);
+            }
+        }
+
         private static bool IsMinecraftVersion(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
