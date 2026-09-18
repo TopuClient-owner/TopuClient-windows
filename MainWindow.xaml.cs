@@ -81,6 +81,7 @@ private static readonly HttpClient Http = CreateHttpClient();
 
     private sealed class ProfileSettings
     {
+        public string Loader { get; set; } = "Vanilla";
         public string Version { get; set; } = DefaultVersion;
         public int RamGb { get; set; } = 4;
     }
@@ -482,6 +483,7 @@ private static readonly HttpClient Http = CreateHttpClient();
                 path,
                 new ProfileSettings
                 {
+                    Loader = "Vanilla",
                     Version = DefaultVersion,
                     RamGb = 4
                 });
@@ -623,10 +625,23 @@ private static readonly HttpClient Http = CreateHttpClient();
             }
 
             string version =
-                SupportedVersions.Contains(
-                    settings.Version)
-                    ? settings.Version
-                    : DefaultVersion;
+                string.IsNullOrWhiteSpace(settings.Version)
+                    ? DefaultVersion
+                    : settings.Version;
+
+            if (_loaderBox != null &&
+                !string.IsNullOrWhiteSpace(settings.Loader))
+            {
+                string loader = settings.Loader;
+                if (loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase) ||
+                    loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase) ||
+                    loader.Equals("Forge", StringComparison.OrdinalIgnoreCase) ||
+                    loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase) ||
+                    loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase))
+                {
+                    _loaderBox.SelectedItem = loader;
+                }
+            }
 
             int ram =
                 Math.Clamp(
@@ -776,8 +791,9 @@ private static readonly HttpClient Http = CreateHttpClient();
 
             if (SelectedProfileLabel != null)
             {
+                string loader = _loaderBox?.SelectedItem?.ToString() ?? "Vanilla";
                 SelectedProfileLabel.Text =
-                    $"● {profile}   •   Fabric {version}   •   {ram}GB RAM";
+                    $"● {profile}   •   {loader} {version}   •   {ram}GB RAM";
             }
 
             if (LaunchProfileLabel != null)
@@ -1825,13 +1841,25 @@ private static readonly HttpClient Http = CreateHttpClient();
         int ram =
             (int)RamSlider.Value;
 
+        string loader = _loaderBox?.SelectedItem?.ToString() ?? "Vanilla";
+
         SaveProfileSettings(
             _gamePath,
             new ProfileSettings
             {
+                Loader = loader,
                 Version = version,
                 RamGb = ram
             });
+
+        // Keep the loader-aware runtime profile and the legacy profile file
+        // synchronized. There must be one source of truth per profile.
+        WriteRuntimeProfile(new RuntimeProfileSettings
+        {
+            Loader = loader,
+            Version = version,
+            RamGb = ram
+        });
 
         SelectedProfileLabel.Text =
             $"● {GetDisplayProfileName(normalizedProfile)}   •   Fabric {version}   •   {ram}GB RAM";

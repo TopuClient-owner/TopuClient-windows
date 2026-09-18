@@ -226,7 +226,7 @@ namespace TopuLauncher
             }
 
             if (major >= 20)
-                return $"1.{major}.{minor}";
+                return minor == 0 ? $"1.{major}" : $"1.{major}.{minor}";
 
             return "";
         }

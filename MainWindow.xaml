@@ -468,7 +468,7 @@
                                            FontSize="11"
                                            Margin="0,2,0,0"/>
 
-                                <TextBlock Text="Fabric PvP Launcher"
+                                <TextBlock Text="Multi-Loader Launcher"
                                            Foreground="{StaticResource TopuGreen}"
                                            FontSize="10"
                                            Margin="0,1,0,0"/>
@@ -831,7 +831,7 @@
                                         Click="SaveProfile_Click"/>
 
                                 <TextBlock x:Name="SelectedProfileLabel"
-                                           Text="● default • Fabric 1.21.1 • 4GB RAM"
+                                           Text="● default • Vanilla 1.21.1 • 4GB RAM"
                                            Foreground="{StaticResource TopuGreen}"
                                            FontSize="11"
                                            Margin="0,12,0,0"/>
