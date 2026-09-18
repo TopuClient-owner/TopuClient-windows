@@ -1,67 +1,98 @@
 using System;
+using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace TopuLauncher
 {
-    // Wires the already-implemented dynamic catalog into the existing
-    // profile UI. This deliberately does not replace the profile system or
-    // add another loader implementation.
-    public partial class MainWindow
+    // Bridges the existing dynamic catalog into the existing profile UI
+    // without creating a second profile/loader implementation.
+    internal static class TopuDynamicCatalogUiHook
     {
-        private bool _topuDynamicCatalogHooked;
-
-        private void InstallDynamicCatalogUiHook()
-        {
-            if (_topuDynamicCatalogHooked || _loaderBox == null || VersionBox == null)
-                return;
-
-            _topuDynamicCatalogHooked = true;
-
-            _loaderBox.SelectionChanged += TopuDynamicLoaderChanged;
-            ProfileSelector.SelectionChanged += TopuDynamicProfileChanged;
-
-            // Let the original profile/runtime initialization finish first.
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                InitializeDynamicVersionCatalog();
-                _ = RefreshDynamicVersionListAsync(GetSelectedVersion());
-            }));
-        }
-
-        private void TopuDynamicLoaderChanged(object? sender, SelectionChangedEventArgs e)
-        {
-            if (!_runtimeUiReady || _loaderBox == null)
-                return;
-
-            _ = RefreshDynamicVersionListAsync(GetSelectedVersion());
-        }
-
-        private void TopuDynamicProfileChanged(object? sender, SelectionChangedEventArgs e)
-        {
-            if (!_runtimeUiReady || e.OriginalSource != ProfileSelector)
-                return;
-
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                _ = RefreshDynamicVersionListAsync(GetSelectedVersion());
-            }));
-        }
-
-        static MainWindow()
+        static TopuDynamicCatalogUiHook()
         {
             EventManager.RegisterClassHandler(
                 typeof(MainWindow),
                 FrameworkElement.LoadedEvent,
-                new RoutedEventHandler(InstallDynamicCatalogHookLoaded));
+                new RoutedEventHandler(OnMainWindowLoaded));
+
+            EventManager.RegisterClassHandler(
+                typeof(ComboBox),
+                Selector.SelectionChangedEvent,
+                new SelectionChangedEventHandler(OnComboBoxSelectionChanged));
         }
 
-        private static void InstallDynamicCatalogHookLoaded(object sender, RoutedEventArgs e)
+        private static void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
             if (sender is not MainWindow window)
                 return;
 
-            window.Dispatcher.BeginInvoke(new Action(window.InstallDynamicCatalogUiHook));
+            // MainWindow.LoaderRuntime creates the loader selector and restores
+            // the active profile first. Refresh the catalog afterwards.
+            window.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                InvokePrivate(window, "InitializeDynamicVersionCatalog");
+            }));
+        }
+
+        private static void OnComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is not ComboBox combo ||
+                Window.GetWindow(combo) is not MainWindow window)
+                return;
+
+            FieldInfo? loaderField = typeof(MainWindow).GetField(
+                "_loaderBox",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            FieldInfo? profileField = typeof(MainWindow).GetField(
+                "ProfileSelector",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            object? loaderBox = loaderField?.GetValue(window);
+            object? profileSelector = profileField?.GetValue(window);
+
+            if (!ReferenceEquals(combo, loaderBox) &&
+                !ReferenceEquals(combo, profileSelector))
+                return;
+
+            window.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    MethodInfo? getSelectedVersion = typeof(MainWindow).GetMethod(
+                        "GetSelectedVersion",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+
+                    MethodInfo? refresh = typeof(MainWindow).GetMethod(
+                        "RefreshDynamicVersionListAsync",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+
+                    string? preferred = getSelectedVersion?.Invoke(window, null) as string;
+                    _ = refresh?.Invoke(window, new object?[] { preferred }) as Task;
+                }
+                catch
+                {
+                    // Optional metadata refresh must never break the launcher.
+                }
+            }));
+        }
+
+        private static void InvokePrivate(MainWindow window, string methodName)
+        {
+            try
+            {
+                MethodInfo? method = typeof(MainWindow).GetMethod(
+                    methodName,
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+
+                method?.Invoke(window, null);
+            }
+            catch
+            {
+                // Keep the existing launcher usable if metadata is unavailable.
+            }
         }
     }
 }
