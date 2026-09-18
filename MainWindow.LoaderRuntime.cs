@@ -167,7 +167,14 @@ namespace TopuLauncher
             current.Version = GetSelectedVersion();
             current.RamGb = Math.Clamp((int)RamSlider.Value, 2, 12);
             WriteRuntimeProfile(current);
+            SaveProfileSettings(_gamePath, new ProfileSettings
+            {
+                Loader = current.Loader,
+                Version = current.Version,
+                RamGb = current.RamGb
+            });
             UpdateRuntimeProfileCard();
+            UpdateLaunchSummary();
         }
 
         private void WriteRuntimeProfile(RuntimeProfileSettings settings)
