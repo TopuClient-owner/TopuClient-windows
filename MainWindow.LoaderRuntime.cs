@@ -98,13 +98,13 @@ namespace TopuLauncher
         private void ProfileAreaButtonClicked(object sender, RoutedEventArgs e)
         {
             if (e.OriginalSource is not Button button || !string.Equals(button.Content?.ToString(), "Save Profile Settings", StringComparison.OrdinalIgnoreCase)) return;
-            Dispatcher.BeginInvoke(new Action(() => { try { SaveRuntimeLoaderSetting(); UpdateLaunchSummary(); } catch (Exception ex) { WriteException("LOADER PROFILE SAVE ERROR", ex); } }));
+            Dispatcher.BeginInvoke(new Action(() => { try { SaveRuntimeLoaderSetting(); UpdateRuntimeProfileCard(); UpdateLaunchSummary(); StatusText.Text = "Profile settings saved."; } catch (Exception ex) { WriteException("LOADER PROFILE SAVE ERROR", ex); } }));
         }
 
         private void RuntimeProfileSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_runtimeUiReady || e.OriginalSource != ProfileSelector) return;
-            Dispatcher.BeginInvoke(new Action(() => { RefreshLoaderUiFromProfile(); UpdateLaunchSummary(); }));
+            Dispatcher.BeginInvoke(new Action(() => { RefreshLoaderUiFromProfile(); UpdateRuntimeProfileCard(); UpdateLaunchSummary(); }));
         }
 
         private void CreateProfilePreview(object sender, MouseButtonEventArgs e) { e.Handled = true; ShowCreateProfileDialog(); }
@@ -140,7 +140,7 @@ namespace TopuLauncher
             VersionBox.IsEnabled = false;
             if (!string.IsNullOrWhiteSpace(preferred))
                 VersionBox.Items.Add(new ComboBoxItem { Content = preferred });
-            UpdateProfileCard();
+            UpdateRuntimeProfileCard();
             UpdateLaunchSummary();
             _ = RefreshDynamicVersionListAsync(preferred);
         }
@@ -167,6 +167,7 @@ namespace TopuLauncher
             current.Version = GetSelectedVersion();
             current.RamGb = Math.Clamp((int)RamSlider.Value, 2, 12);
             WriteRuntimeProfile(current);
+            UpdateRuntimeProfileCard();
         }
 
         private void WriteRuntimeProfile(RuntimeProfileSettings settings)
@@ -186,7 +187,22 @@ namespace TopuLauncher
             int ram = Math.Clamp(settings.RamGb, 2, 12);
             RamSlider.Value = ram;
             RamLabel.Text = $"{ram}GB";
+            UpdateRuntimeProfileCard();
             UpdateLaunchSummary();
+        }
+
+        private void UpdateRuntimeProfileCard()
+        {
+            try
+            {
+                RuntimeProfileSettings profile = GetRuntimeProfile();
+                string loader = string.IsNullOrWhiteSpace(profile.Loader) ? "Vanilla" : profile.Loader;
+                string version = string.IsNullOrWhiteSpace(profile.Version) ? "unknown" : profile.Version;
+                int ram = Math.Clamp(profile.RamGb, 2, 12);
+                if (SelectedProfileLabel != null)
+                    SelectedProfileLabel.Text = $"● {GetActiveProfileName()} • {loader} {version} • {ram}GB RAM";
+            }
+            catch { }
         }
 
         private void ShowCreateProfileDialog()
@@ -214,7 +230,7 @@ namespace TopuLauncher
             cancel.Click += (_, _) => dialog.Close();
             create.Click += (_, _) =>
             {
-                string name = nameBox.Text.Trim(); string loader = loaderBox.SelectedItem?.ToString() ?? "Vanilla"; string version = versionBox.SelectedItem?.ToString() ?? "";
+                string name = nameBox.Text.Trim(); string loader = loaderBox.SelectedItem?.ToString() ?? "Vanilla"; string version = (versionBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? versionBox.SelectedItem?.ToString() ?? "";
                 if (string.IsNullOrWhiteSpace(name)) { MessageBox.Show(dialog,"Enter a profile name.","Topu Client",MessageBoxButton.OK,MessageBoxImage.Warning); return; }
                 if (string.IsNullOrWhiteSpace(version)) return;
                 try
@@ -224,7 +240,7 @@ namespace TopuLauncher
                     Directory.CreateDirectory(path); string oldPath = _gamePath; _gamePath = path;
                     try { WriteRuntimeProfile(new RuntimeProfileSettings { Loader=loader, Version=version, RamGb=(int)ram.Value }); }
                     finally { _gamePath = oldPath; }
-                    LoadProfilesIntoSelector(); ProfileSelector.SelectedItem = GetDisplayProfileName(normalized); SetActiveProfile(GetDisplayProfileName(normalized)); RefreshLoaderUiFromProfile(); StatusText.Text = $"Created {loader} profile: {GetDisplayProfileName(normalized)}"; WriteLog($"Created {loader} profile {normalized} for Minecraft {version} with {(int)ram.Value}GB RAM."); dialog.Close();
+                    LoadProfilesIntoSelector(); ProfileSelector.SelectedItem = GetDisplayProfileName(normalized); SetActiveProfile(GetDisplayProfileName(normalized)); RefreshLoaderUiFromProfile(); UpdateRuntimeProfileCard(); StatusText.Text = $"Created {loader} profile: {GetDisplayProfileName(normalized)}"; WriteLog($"Created {loader} profile {normalized} for Minecraft {version} with {(int)ram.Value}GB RAM."); dialog.Close();
                 }
                 catch (Exception ex) { WriteException("CUSTOM PROFILE CREATE ERROR", ex); MessageBox.Show(dialog,ex.Message,"Profile Error",MessageBoxButton.OK,MessageBoxImage.Error); }
             };
