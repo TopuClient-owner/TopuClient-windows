@@ -583,7 +583,7 @@
                                     <StackPanel Orientation="Horizontal"
                                                 Margin="0,4,0,0">
 
-                                        <TextBlock Text="Fabric"
+                                        <TextBlock Text="Vanilla"
                                                    Foreground="{StaticResource TopuGreen}"
                                                    FontSize="11"/>
 
@@ -646,7 +646,7 @@
                         </StackPanel>
 
                         <Button x:Name="LaunchBtn"
-                                Content="⚡   LAUNCH FABRIC"
+                                Content="⚡   LAUNCH GAME"
                                 Height="52"
                                 Style="{StaticResource GreenButton}"
                                 FontSize="14"
