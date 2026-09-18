@@ -33,7 +33,7 @@ namespace TopuLauncher
 
         private static HttpClient CreateDynamicVersionHttp()
         {
-            HttpClient client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            HttpClient client = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
             client.DefaultRequestHeaders.UserAgent.ParseAdd("TopuClient/1.0");
             return client;
         }
@@ -201,7 +201,7 @@ namespace TopuLauncher
 
             // Only advertise Minecraft versions for which this loader actually
             // publishes at least one STABLE loader build.
-            using SemaphoreSlim gate = new SemaphoreSlim(12, 12);
+            using SemaphoreSlim gate = new SemaphoreSlim(4, 4);
             List<Task<string?>> checks = new List<Task<string?>>(candidates.Length);
 
             foreach (string gameVersion in candidates)
