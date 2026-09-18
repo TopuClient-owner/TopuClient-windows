@@ -57,6 +57,8 @@ namespace TopuLauncher
                 if (versions.Length == 0)
                     throw new InvalidOperationException($"The {loader} version service returned no supported Minecraft versions.");
 
+                WriteLog($"{loader} catalog source returned {versions.Length} stable Minecraft versions.");
+
                 string saved = GetRuntimeProfile().Version;
                 string target = !string.IsNullOrWhiteSpace(saved) ? saved : uiPreferred;
 
@@ -108,6 +110,7 @@ namespace TopuLauncher
                     .Select(x => x.GetProperty("id").GetString() ?? "")
                     .Where(IsMinecraftVersion)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderByDescending(VersionSortKey, StringComparer.Ordinal)
                     .ToArray();
             }
 
@@ -148,6 +151,7 @@ namespace TopuLauncher
                 .Select(x => x.GetProperty("version").GetString() ?? "")
                 .Where(IsMinecraftVersion)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(VersionSortKey, StringComparer.Ordinal)
                 .ToArray();
         }
 
