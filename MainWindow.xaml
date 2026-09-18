@@ -831,7 +831,7 @@
                                         Margin="0,18,0,0"
                                         Style="{StaticResource GreenButton}"
                                         HorizontalAlignment="Left"
-                                        Click="SaveProfile_Click"/>
+                                        />
 
                                 <TextBlock x:Name="SelectedProfileLabel"
                                            Text="● default • Vanilla 1.21.1 • 4GB RAM"
