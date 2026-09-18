@@ -7,10 +7,10 @@
      mc:Ignorable="d"
      Title="Topu Client"
      Icon="Assets/TopuLauncher.ico"
-     Height="650"
-     Width="1000"
-     MinHeight="650"
-     MinWidth="900"
+     Height="760"
+     Width="1180"
+     MinHeight="760"
+     MinWidth="1000"
      WindowStartupLocation="CenterScreen"
      WindowStyle="None"
      AllowsTransparency="True"
@@ -23,17 +23,17 @@
     <!-- ========================================================= -->
 
     <SolidColorBrush x:Key="WindowBackground"
-                     Color="#101114"/>
+                     Color="#0B0D11"/>
 
     <SolidColorBrush x:Key="SidebarBackground"
-                     Color="#15171B"/>
+                     Color="#11141A"/>
 
     <SolidColorBrush x:Key="CardBackground"
-                     Color="#191B20"/>
+                     Color="#151922"/>
 
     <SolidColorBrush x:Key="CardBorder"
-                     Color="#292C33"/>
-
+                     Color="#262C38"/>
+\n    <DropShadowEffect x:Key="CardShadow" BlurRadius="24" ShadowDepth="0" Opacity="0.28"/>\n
     <SolidColorBrush x:Key="InputBackground"
                      Color="#111318"/>
 
@@ -50,10 +50,10 @@
                      Color="#F5F7FA"/>
 
     <SolidColorBrush x:Key="TopuGreen"
-                     Color="#00FF88"/>
+                     Color="#5CFFB0"/>
 
     <SolidColorBrush x:Key="TopuGreenDark"
-                     Color="#00C96A"/>
+                     Color="#24D98B"/>
 
     <!-- ========================================================= -->
     <!-- CARD -->
@@ -305,9 +305,9 @@
     <Grid>
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="46"/>
+            <RowDefinition Height="54"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="34"/>
+            <RowDefinition Height="38"/>
         </Grid.RowDefinitions>
 
         <!-- ===================================================== -->
@@ -393,7 +393,7 @@
         <Grid Grid.Row="1">
 
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="210"/>
+                <ColumnDefinition Width="230"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
@@ -491,7 +491,7 @@
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
 
-                <Grid Margin="26">
+                <Grid Margin="32">
 
                     <!-- ========================================= -->
                     <!-- LAUNCH TAB -->
