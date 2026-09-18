@@ -17,31 +17,6 @@ namespace TopuLauncher
 {
     public partial class MainWindow
     {
-        private static readonly string[] RuntimeVanillaVersions =
-        {
-            "1.8.9", "1.20.1", "1.21.1", "1.21.2", "1.21.4", "1.21.5", "1.21.8", "1.21.11", "26.1.2", "26.2"
-        };
-
-        private static readonly string[] RuntimeFabricVersions =
-        {
-            "1.21.1", "1.21.4", "1.21.8", "1.21.11", "26.1.2", "26.2"
-        };
-
-        private static readonly string[] RuntimeForgeVersions =
-        {
-            "1.20.1", "1.8.9"
-        };
-
-        private static readonly string[] RuntimeQuiltVersions =
-        {
-            "1.20.6", "1.21"
-        };
-
-        private static readonly string[] RuntimeNeoForgeVersions =
-        {
-            "1.21.1", "1.21.4", "1.21.8", "1.21.11", "26.1.2", "26.2"
-        };
-
         private ComboBox? _loaderBox;
         private bool _runtimeUiReady;
 
@@ -75,6 +50,7 @@ namespace TopuLauncher
                 HookLaunchButton();
                 HookProfileSelection();
                 RefreshLoaderUiFromProfile();
+                InitializeDynamicVersionCatalog();
                 UpdateLaunchSummary();
             }
             catch (Exception ex) { WriteException("LOADER UI INITIALIZATION ERROR", ex); }
@@ -149,22 +125,13 @@ namespace TopuLauncher
 
         private void SetVersionChoices(string loader, string? preferred = null)
         {
-            string[] versions = loader switch
-            {
-                "Vanilla" => RuntimeVanillaVersions,
-                "Forge" => RuntimeForgeVersions,
-                "Quilt" => RuntimeQuiltVersions,
-                "NeoForge" => RuntimeNeoForgeVersions,
-                _ => RuntimeFabricVersions
-            };
-            string current = preferred ?? GetSelectedVersion();
             VersionBox.Items.Clear();
-            foreach (string version in versions) VersionBox.Items.Add(new ComboBoxItem { Content = version });
-            int index = Array.IndexOf(versions, current);
-            if (index < 0) index = 0;
-            VersionBox.SelectedIndex = index;
+            VersionBox.IsEnabled = false;
+            if (!string.IsNullOrWhiteSpace(preferred))
+                VersionBox.Items.Add(new ComboBoxItem { Content = preferred });
             UpdateProfileCard();
             UpdateLaunchSummary();
+            _ = RefreshDynamicVersionListAsync(preferred);
         }
 
         private RuntimeProfileSettings GetRuntimeProfile()
@@ -219,7 +186,7 @@ namespace TopuLauncher
             TextBlock title = new TextBlock { Text = "Create New Profile", FontSize = 24, FontWeight = FontWeights.Bold, Foreground = Brushes.White, Margin = new Thickness(0,0,0,18) }; Grid.SetRow(title,0); root.Children.Add(title);
             TextBox nameBox = new TextBox { Height = 36, Padding = new Thickness(10,6,10,6), Text = "pvp" }; AddDialogField(root,1,"Profile name",nameBox);
             ComboBox loaderBox = new ComboBox { Height = 36, ItemsSource = new[] { "Vanilla", "Fabric", "Forge", "Quilt", "NeoForge" }, SelectedIndex = 0 }; AddDialogField(root,2,"Loader",loaderBox);
-            ComboBox versionBox = new ComboBox { Height = 36, ItemsSource = RuntimeVanillaVersions, SelectedIndex = 0 }; AddDialogField(root,3,"Minecraft version",versionBox);
+            ComboBox versionBox = new ComboBox { Height = 36 }; AddDialogField(root,3,"Minecraft version",versionBox);
             Slider ram = new Slider { Minimum = 2, Maximum = 12, Value = 4, TickFrequency = 1, IsSnapToTickEnabled = true };
             TextBlock ramValue = new TextBlock { Text = "4GB", Foreground = (Brush)FindResource("TopuGreen"), FontWeight = FontWeights.Bold, Margin = new Thickness(10,0,0,0) };
             ram.ValueChanged += (_, args) => ramValue.Text = $"{(int)args.NewValue}GB";
@@ -227,9 +194,9 @@ namespace TopuLauncher
             loaderBox.SelectionChanged += (_, _) =>
             {
                 string loader = loaderBox.SelectedItem?.ToString() ?? "Vanilla";
-                string[] choices = loader switch { "Vanilla" => RuntimeVanillaVersions, "Forge" => RuntimeForgeVersions, "Quilt" => RuntimeQuiltVersions, "NeoForge" => RuntimeNeoForgeVersions, _ => RuntimeFabricVersions };
-                versionBox.ItemsSource = choices; versionBox.SelectedIndex = 0;
+                _ = PopulateVersionComboAsync(versionBox, loader);
             };
+            _ = PopulateVersionComboAsync(versionBox, "Vanilla");
             StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             Button cancel = new Button { Content = "Cancel", Width = 100, Height = 38, Margin = new Thickness(0,0,10,0), Style = FindResource("ModernButton") as Style };
             Button create = new Button { Content = "Create Profile", Width = 130, Height = 38, Style = FindResource("GreenButton") as Style };
