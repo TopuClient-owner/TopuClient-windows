@@ -1,14 +1,12 @@
 using System;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace TopuLauncher
 {
-    // Keeps profile state, the launch card, and the Modrinth manager on one
-    // source of truth. This also repairs older profiles that were saved with
-    // the launch-card defaults instead of their selected loader/version.
+    // Keeps the launch summary synchronized with the selected profile without
+    // colliding with the older TopuProfileTruthFix handlers.
     public partial class MainWindow
     {
         private static readonly object ProfileTruthAndUiFixHook = RegisterProfileTruthAndUiFixHook();
@@ -33,35 +31,31 @@ namespace TopuLauncher
 
         private void InstallProfileTruthAndUiFix()
         {
-            // The XAML save button has no Click attribute; the runtime loader
-            // adds its handler. Listen as well so a save always updates both
-            // profile formats, even when an older UI handler marks the event
-            // handled.
             TabProfiles?.AddHandler(
                 Button.ClickEvent,
-                new RoutedEventHandler(ProfileTruthButtonClicked),
+                new RoutedEventHandler(ProfileTruthAndUiButtonClicked),
                 true);
 
             VersionBox?.AddHandler(
                 Selector.SelectionChangedEvent,
-                new SelectionChangedEventHandler(ProfileTruthSelectionChanged),
+                new SelectionChangedEventHandler(ProfileTruthAndUiSelectionChanged),
                 true);
 
             _loaderBox?.AddHandler(
                 Selector.SelectionChangedEvent,
-                new SelectionChangedEventHandler(ProfileTruthSelectionChanged),
+                new SelectionChangedEventHandler(ProfileTruthAndUiSelectionChanged),
                 true);
 
             ProfileSelector?.AddHandler(
                 Selector.SelectionChangedEvent,
-                new SelectionChangedEventHandler(ProfileTruthSelectionChanged),
+                new SelectionChangedEventHandler(ProfileTruthAndUiSelectionChanged),
                 true);
 
             RefreshProfileTruthAndLaunchCard();
             ApplyLunarClientVisualPolish();
         }
 
-        private void ProfileTruthButtonClicked(object sender, RoutedEventArgs e)
+        private void ProfileTruthAndUiButtonClicked(object sender, RoutedEventArgs e)
         {
             if (e.OriginalSource is Button button &&
                 string.Equals(button.Content?.ToString(), "Save Profile Settings", StringComparison.OrdinalIgnoreCase))
@@ -74,10 +68,8 @@ namespace TopuLauncher
             }
         }
 
-        private void ProfileTruthSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ProfileTruthAndUiSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Ignore the transient empty selection while the loader-specific
-            // version catalog is being rebuilt.
             if (e.OriginalSource is not ComboBox box ||
                 (box == VersionBox && !VersionBox.IsEnabled))
                 return;
@@ -111,9 +103,6 @@ namespace TopuLauncher
                     ForgeVersion = current.ForgeVersion
                 };
 
-                // These two files existed in different launcher revisions.
-                // Keep them identical so the launcher and Modrinth cannot use
-                // different loader/version values for the same profile.
                 WriteRuntimeProfile(settings);
                 SaveProfileSettings(_gamePath, new ProfileSettings
                 {
@@ -152,8 +141,6 @@ namespace TopuLauncher
 
         private void ApplyLunarClientVisualPolish()
         {
-            // Keep the existing dark Topu identity while matching the compact,
-            // high-contrast card treatment users expect from Lunar Client.
             if (TabLaunch != null) TabLaunch.Background = Brushes.Transparent;
             if (TabProfiles != null) TabProfiles.Background = Brushes.Transparent;
             if (TabAccounts != null) TabAccounts.Background = Brushes.Transparent;
