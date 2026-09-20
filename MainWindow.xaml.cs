@@ -916,7 +916,7 @@ private static readonly HttpClient Http = CreateHttpClient();
                                 .OfType<IXboxGameAccount>())
                     {
                         string username =
-                            account.XboxTokens?.XstsToken?.XuiClaims?.Gamertag
+                            account.Identifier
                             ?? "Microsoft Account";
 
                         AccountSelector.Items.Add(
