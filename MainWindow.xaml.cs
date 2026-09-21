@@ -70,7 +70,6 @@ private static readonly HttpClient Http = CreateHttpClient();
         ("fabric-api", "Fabric API"),
         ("sodium", "Sodium"),
         ("lithium", "Lithium"),
-        ("dynamic-fps", "Dynamic FPS"),
         ("sodium-extra", "Sodium Extra"),
         ("krypton", "Krypton")
     };
@@ -81,6 +80,7 @@ private static readonly HttpClient Http = CreateHttpClient();
 
     private sealed class ProfileSettings
     {
+        public string Loader { get; set; } = "Vanilla";
         public string Version { get; set; } = DefaultVersion;
         public int RamGb { get; set; } = 4;
     }
@@ -482,6 +482,7 @@ private static readonly HttpClient Http = CreateHttpClient();
                 path,
                 new ProfileSettings
                 {
+                    Loader = "Vanilla",
                     Version = DefaultVersion,
                     RamGb = 4
                 });
@@ -589,7 +590,7 @@ private static readonly HttpClient Http = CreateHttpClient();
     {
         return Path.Combine(
             gamePath,
-            "topu-profile.json");
+            "topuclient-profile.json");
     }
 
     private void LoadProfileSettings(
@@ -622,11 +623,9 @@ private static readonly HttpClient Http = CreateHttpClient();
                     settings);
             }
 
-            string version =
-                SupportedVersions.Contains(
-                    settings.Version)
-                    ? settings.Version
-                    : DefaultVersion;
+            string version = string.IsNullOrWhiteSpace(settings.Version)
+                ? DefaultVersion
+                : settings.Version;
 
             int ram =
                 Math.Clamp(
@@ -768,8 +767,9 @@ private static readonly HttpClient Http = CreateHttpClient();
             string profile =
                 GetActiveProfileName();
 
-            string version =
-                GetSelectedVersion();
+            ProfileSettings settings = ReadProfileSettingsForDisplay();
+            string loader = string.IsNullOrWhiteSpace(settings.Loader) ? "Vanilla" : settings.Loader;
+            string version = string.IsNullOrWhiteSpace(settings.Version) ? GetSelectedVersion() : settings.Version;
 
             int ram =
                 (int)RamSlider.Value;
