@@ -2761,8 +2761,18 @@ private static readonly HttpClient Http = CreateHttpClient();
         WriteLog(
             "===== PERFORMANCE MOD INSTALL =====");
 
-        foreach ((string slug, string name)
-                 in PerformanceMods)
+        IEnumerable<(string Slug, string Name)> projects =
+            loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase)
+                ? new[]
+                {
+                    ("qsl", "Quilted Fabric API / QSL"),
+                    ("sodium", "Sodium"),
+                    ("lithium", "Lithium"),
+                    ("dynamic-fps", "Dynamic FPS")
+                }
+                : PerformanceMods;
+
+        foreach ((string slug, string name) in projects)
         {
             try
             {
