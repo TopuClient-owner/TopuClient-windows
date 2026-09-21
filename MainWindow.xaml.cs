@@ -1992,10 +1992,17 @@ private static readonly HttpClient Http = CreateHttpClient();
             "https://api.modrinth.com/v2/project/" +
             Uri.EscapeDataString(projectId) +
             "/version" +
-            "?loaders=%5B%22fabric%22%5D" +
-            "&game_versions=%5B%22" +
-            Uri.EscapeDataString(minecraftVersion) +
-            "%22%5D";
+            "?loaders=" +
+            Uri.EscapeDataString(
+                JsonSerializer.Serialize(
+                    new[]
+                    {
+                        GetRuntimeProfile().Loader.ToLowerInvariant()
+                    })) +
+            "&game_versions=" +
+            Uri.EscapeDataString(
+                JsonSerializer.Serialize(
+                    new[] { minecraftVersion }));
 
         using HttpResponseMessage response =
             await Http.GetAsync(url);
@@ -2742,6 +2749,7 @@ private static readonly HttpClient Http = CreateHttpClient();
     private async Task InstallPerformanceModsAsync(
         string minecraftVersion)
     {
+        string loader = GetRuntimeProfile().Loader;
         string modsFolder =
             Path.Combine(
                 _gamePath,
@@ -2765,7 +2773,8 @@ private static readonly HttpClient Http = CreateHttpClient();
                     await DownloadPerformanceModAsync(
                         slug,
                         name,
-                        minecraftVersion);
+                        minecraftVersion,
+                        loader);
 
                 if (installed)
                 {
@@ -2790,16 +2799,22 @@ private static readonly HttpClient Http = CreateHttpClient();
     private async Task<bool> DownloadPerformanceModAsync(
         string slug,
         string name,
-        string minecraftVersion)
+        string minecraftVersion,
+        string loader)
     {
+        if (loader.Equals("Vanilla", StringComparison.OrdinalIgnoreCase))
+            return false;
+
         string url =
             "https://api.modrinth.com/v2/project/" +
             Uri.EscapeDataString(slug) +
             "/version" +
-            "?loaders=%5B%22fabric%22%5D" +
-            "&game_versions=%5B%22" +
-            Uri.EscapeDataString(minecraftVersion) +
-            "%22%5D";
+            "?loaders=" +
+            Uri.EscapeDataString(
+                JsonSerializer.Serialize(new[] { loader.ToLowerInvariant() })) +
+            "&game_versions=" +
+            Uri.EscapeDataString(
+                JsonSerializer.Serialize(new[] { minecraftVersion }));
 
         using HttpResponseMessage response =
             await Http.GetAsync(url);
