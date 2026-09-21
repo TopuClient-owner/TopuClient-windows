@@ -277,15 +277,25 @@ namespace TopuLauncher
                 string[] projects;
                 if (loader.Equals("Forge", StringComparison.OrdinalIgnoreCase))
                 {
-                    projects = UniversalPerformanceForge;
+                    projects = IsForgeLegacyNoModsVersion(minecraftVersion)
+                        ? Array.Empty<string>()
+                        : UniversalPerformanceForge;
                 }
                 else if (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
                 {
                     projects = UniversalPerformanceQuilt;
                 }
-                else
+                else if (loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase))
+                {
+                    projects = UniversalPerformanceNeoForge;
+                }
+                else if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
                 {
                     projects = UniversalPerformanceFabricFamily;
+                }
+                else
+                {
+                    projects = Array.Empty<string>();
                 }
 
                 string modsPath = Path.Combine(_gamePath, "mods");
