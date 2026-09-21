@@ -335,6 +335,7 @@ namespace TopuLauncher
                 "ferritecore",
                 "immediatelyfast",
                 "embeddium",
+                "rubidium",
                 "modernfix",
                 "krypton",
                 "sodium-extra",
