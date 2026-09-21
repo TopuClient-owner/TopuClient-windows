@@ -18,12 +18,13 @@ namespace TopuLauncher
     {
         private static readonly string[] UniversalPerformanceFabricFamily =
         {
-            "sodium", "lithium", "dynamic-fps", "ferrite-core", "immediatelyfast"
+            "fabric-api", "sodium", "sodium-extra", "lithium", "dynamic-fps",
+            "ferrite-core", "immediatelyfast", "krypton", "modmenu"
         };
 
         private static readonly string[] UniversalPerformanceForge =
         {
-            "embeddium", "ferrite-core", "modernfix", "immediatelyfast", "dynamic-fps"
+            "rubidium", "modernfix", "ferrite-core"
         };
 
         // Quilt gets Quilt-compatible projects only. Do not reuse the
@@ -31,7 +32,14 @@ namespace TopuLauncher
         // Fabric build with incompatible Fabric Loader/API requirements.
         private static readonly string[] UniversalPerformanceQuilt =
         {
-            "qsl", "sodium", "lithium", "dynamic-fps"
+            "qsl", "sodium", "sodium-extra", "lithium", "dynamic-fps",
+            "ferrite-core", "immediatelyfast", "modmenu"
+        };
+
+        private static readonly string[] UniversalPerformanceNeoForge =
+        {
+            "sodium", "sodium-extra", "lithium", "dynamic-fps",
+            "ferrite-core", "immediatelyfast", "modernfix"
         };
 
         private CancellationTokenSource? _universalVersionCts;
@@ -298,6 +306,14 @@ namespace TopuLauncher
             {
                 WriteException("PERFORMANCE PACK ERROR", ex);
             }
+        }
+
+        private static bool IsForgeLegacyNoModsVersion(string minecraftVersion)
+        {
+            if (!Version.TryParse(minecraftVersion, out Version? version))
+                return false;
+
+            return version.Major == 1 && version.Minor >= 8 && version.Minor <= 14;
         }
 
         private void RemoveObsoletePerformanceMods(string modsPath, string loader)
