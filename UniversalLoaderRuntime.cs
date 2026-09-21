@@ -18,7 +18,7 @@ namespace TopuLauncher
     {
         private static readonly string[] UniversalPerformanceFabricFamily =
         {
-            "fabric-api", "sodium", "sodium-extra", "lithium", "dynamic-fps",
+            "fabric-api", "sodium", "sodium-extra", "lithium",
             "ferrite-core", "immediatelyfast", "krypton", "modmenu"
         };
 
@@ -32,13 +32,13 @@ namespace TopuLauncher
         // Fabric build with incompatible Fabric Loader/API requirements.
         private static readonly string[] UniversalPerformanceQuilt =
         {
-            "qsl", "sodium", "sodium-extra", "lithium", "dynamic-fps",
+            "qsl", "sodium", "sodium-extra", "lithium",
             "ferrite-core", "immediatelyfast", "modmenu"
         };
 
         private static readonly string[] UniversalPerformanceNeoForge =
         {
-            "sodium", "sodium-extra", "lithium", "dynamic-fps",
+            "sodium", "sodium-extra", "lithium",
             "ferrite-core", "immediatelyfast", "modernfix"
         };
 
