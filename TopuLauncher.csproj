@@ -13,14 +13,15 @@
 
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
+
+    <!-- The launcher itself is deliberately a normal multi-file application.
+         The separate TopuClient-Setup.exe is the installer. -->
     <PublishSingleFile>false</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
-    <ApplicationIcon>Assets\TopuLauncher.ico</ApplicationIcon>
 
-    <!-- Keep the existing launcher nullable/legacy code warning-clean. -->
-    <NoWarn>$(NoWarn);CS0169;CS8601;CS8602</NoWarn>
+    <ApplicationIcon>Assets\TopuLauncher.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,7 +34,6 @@
 
   <ItemGroup>
     <Resource Include="Assets\TopuLauncher.ico" />
-    <EmbeddedResource Include="Assets\Preculled\options.txt" />
   </ItemGroup>
 
 </Project>

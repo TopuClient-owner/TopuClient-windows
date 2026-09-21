@@ -17,6 +17,31 @@ namespace TopuLauncher
 {
     public partial class MainWindow
     {
+        private static readonly string[] RuntimeVanillaVersions =
+        {
+            "1.8.9", "1.20.1", "1.21.1", "1.21.2", "1.21.4", "1.21.5", "1.21.8", "1.21.11", "26.1.2", "26.2"
+        };
+
+        private static readonly string[] RuntimeFabricVersions =
+        {
+            "1.21.1", "1.21.4", "1.21.8", "1.21.11", "26.1.2", "26.2"
+        };
+
+        private static readonly string[] RuntimeForgeVersions =
+        {
+            "1.20.1", "1.8.9"
+        };
+
+        private static readonly string[] RuntimeQuiltVersions =
+        {
+            "1.20.6", "1.21"
+        };
+
+        private static readonly string[] RuntimeNeoForgeVersions =
+        {
+            "1.21.1", "1.21.4", "1.21.8", "1.21.11", "26.1.2", "26.2"
+        };
+
         private ComboBox? _loaderBox;
         private bool _runtimeUiReady;
 
@@ -50,7 +75,6 @@ namespace TopuLauncher
                 HookLaunchButton();
                 HookProfileSelection();
                 RefreshLoaderUiFromProfile();
-                InitializeDynamicVersionCatalog();
                 UpdateLaunchSummary();
             }
             catch (Exception ex) { WriteException("LOADER UI INITIALIZATION ERROR", ex); }
@@ -98,32 +122,21 @@ namespace TopuLauncher
         private void ProfileAreaButtonClicked(object sender, RoutedEventArgs e)
         {
             if (e.OriginalSource is not Button button || !string.Equals(button.Content?.ToString(), "Save Profile Settings", StringComparison.OrdinalIgnoreCase)) return;
-            Dispatcher.BeginInvoke(new Action(() => { try { SaveRuntimeLoaderSetting(); UpdateRuntimeProfileCard(); UpdateLaunchSummary(); StatusText.Text = "Profile settings saved."; } catch (Exception ex) { WriteException("LOADER PROFILE SAVE ERROR", ex); } }));
+            Dispatcher.BeginInvoke(new Action(() => { try { SaveRuntimeLoaderSetting(); UpdateLaunchSummary(); } catch (Exception ex) { WriteException("LOADER PROFILE SAVE ERROR", ex); } }));
         }
 
         private void RuntimeProfileSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_runtimeUiReady || e.OriginalSource != ProfileSelector) return;
-            Dispatcher.BeginInvoke(new Action(() => { RefreshLoaderUiFromProfile(); UpdateRuntimeProfileCard(); UpdateLaunchSummary(); }));
+            Dispatcher.BeginInvoke(new Action(() => { RefreshLoaderUiFromProfile(); UpdateLaunchSummary(); }));
         }
 
         private void CreateProfilePreview(object sender, MouseButtonEventArgs e) { e.Handled = true; ShowCreateProfileDialog(); }
 
         private void LaunchPreview(object sender, MouseButtonEventArgs e)
         {
-            RuntimeProfileSettings profile = GetRuntimeProfile();
-            string loader = profile.Loader;
-
-            if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
-            {
-                e.Handled = true;
-                _ = LaunchDynamicFabricAsync(profile);
-                return;
-            }
-
-            if (loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase))
-                return;
-
+            string loader = GetRuntimeProfile().Loader;
+            if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase) || loader.Equals("NeoForge", StringComparison.OrdinalIgnoreCase)) return;
             e.Handled = true;
             _ = LaunchNonFabricProfileAsync();
         }
@@ -136,13 +149,22 @@ namespace TopuLauncher
 
         private void SetVersionChoices(string loader, string? preferred = null)
         {
+            string[] versions = loader switch
+            {
+                "Vanilla" => RuntimeVanillaVersions,
+                "Forge" => RuntimeForgeVersions,
+                "Quilt" => RuntimeQuiltVersions,
+                "NeoForge" => RuntimeNeoForgeVersions,
+                _ => RuntimeFabricVersions
+            };
+            string current = preferred ?? GetSelectedVersion();
             VersionBox.Items.Clear();
-            VersionBox.IsEnabled = false;
-            if (!string.IsNullOrWhiteSpace(preferred))
-                VersionBox.Items.Add(new ComboBoxItem { Content = preferred });
-            UpdateRuntimeProfileCard();
+            foreach (string version in versions) VersionBox.Items.Add(new ComboBoxItem { Content = version });
+            int index = Array.IndexOf(versions, current);
+            if (index < 0) index = 0;
+            VersionBox.SelectedIndex = index;
+            UpdateProfileCard();
             UpdateLaunchSummary();
-            _ = RefreshDynamicVersionListAsync(preferred);
         }
 
         private RuntimeProfileSettings GetRuntimeProfile()
@@ -167,14 +189,6 @@ namespace TopuLauncher
             current.Version = GetSelectedVersion();
             current.RamGb = Math.Clamp((int)RamSlider.Value, 2, 12);
             WriteRuntimeProfile(current);
-            SaveProfileSettings(_gamePath, new ProfileSettings
-            {
-                Loader = current.Loader,
-                Version = current.Version,
-                RamGb = current.RamGb
-            });
-            UpdateRuntimeProfileCard();
-            UpdateLaunchSummary();
         }
 
         private void WriteRuntimeProfile(RuntimeProfileSettings settings)
@@ -194,22 +208,7 @@ namespace TopuLauncher
             int ram = Math.Clamp(settings.RamGb, 2, 12);
             RamSlider.Value = ram;
             RamLabel.Text = $"{ram}GB";
-            UpdateRuntimeProfileCard();
             UpdateLaunchSummary();
-        }
-
-        private void UpdateRuntimeProfileCard()
-        {
-            try
-            {
-                RuntimeProfileSettings profile = GetRuntimeProfile();
-                string loader = string.IsNullOrWhiteSpace(profile.Loader) ? "Vanilla" : profile.Loader;
-                string version = string.IsNullOrWhiteSpace(profile.Version) ? "unknown" : profile.Version;
-                int ram = Math.Clamp(profile.RamGb, 2, 12);
-                if (SelectedProfileLabel != null)
-                    SelectedProfileLabel.Text = $"● {GetActiveProfileName()} • {loader} {version} • {ram}GB RAM";
-            }
-            catch { }
         }
 
         private void ShowCreateProfileDialog()
@@ -220,7 +219,7 @@ namespace TopuLauncher
             TextBlock title = new TextBlock { Text = "Create New Profile", FontSize = 24, FontWeight = FontWeights.Bold, Foreground = Brushes.White, Margin = new Thickness(0,0,0,18) }; Grid.SetRow(title,0); root.Children.Add(title);
             TextBox nameBox = new TextBox { Height = 36, Padding = new Thickness(10,6,10,6), Text = "pvp" }; AddDialogField(root,1,"Profile name",nameBox);
             ComboBox loaderBox = new ComboBox { Height = 36, ItemsSource = new[] { "Vanilla", "Fabric", "Forge", "Quilt", "NeoForge" }, SelectedIndex = 0 }; AddDialogField(root,2,"Loader",loaderBox);
-            ComboBox versionBox = new ComboBox { Height = 36 }; AddDialogField(root,3,"Minecraft version",versionBox);
+            ComboBox versionBox = new ComboBox { Height = 36, ItemsSource = RuntimeVanillaVersions, SelectedIndex = 0 }; AddDialogField(root,3,"Minecraft version",versionBox);
             Slider ram = new Slider { Minimum = 2, Maximum = 12, Value = 4, TickFrequency = 1, IsSnapToTickEnabled = true };
             TextBlock ramValue = new TextBlock { Text = "4GB", Foreground = (Brush)FindResource("TopuGreen"), FontWeight = FontWeights.Bold, Margin = new Thickness(10,0,0,0) };
             ram.ValueChanged += (_, args) => ramValue.Text = $"{(int)args.NewValue}GB";
@@ -228,16 +227,16 @@ namespace TopuLauncher
             loaderBox.SelectionChanged += (_, _) =>
             {
                 string loader = loaderBox.SelectedItem?.ToString() ?? "Vanilla";
-                _ = PopulateVersionComboAsync(versionBox, loader);
+                string[] choices = loader switch { "Vanilla" => RuntimeVanillaVersions, "Forge" => RuntimeForgeVersions, "Quilt" => RuntimeQuiltVersions, "NeoForge" => RuntimeNeoForgeVersions, _ => RuntimeFabricVersions };
+                versionBox.ItemsSource = choices; versionBox.SelectedIndex = 0;
             };
-            _ = PopulateVersionComboAsync(versionBox, "Vanilla");
             StackPanel buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             Button cancel = new Button { Content = "Cancel", Width = 100, Height = 38, Margin = new Thickness(0,0,10,0), Style = FindResource("ModernButton") as Style };
             Button create = new Button { Content = "Create Profile", Width = 130, Height = 38, Style = FindResource("GreenButton") as Style };
             cancel.Click += (_, _) => dialog.Close();
             create.Click += (_, _) =>
             {
-                string name = nameBox.Text.Trim(); string loader = loaderBox.SelectedItem?.ToString() ?? "Vanilla"; string version = (versionBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? versionBox.SelectedItem?.ToString() ?? "";
+                string name = nameBox.Text.Trim(); string loader = loaderBox.SelectedItem?.ToString() ?? "Vanilla"; string version = versionBox.SelectedItem?.ToString() ?? "";
                 if (string.IsNullOrWhiteSpace(name)) { MessageBox.Show(dialog,"Enter a profile name.","Topu Client",MessageBoxButton.OK,MessageBoxImage.Warning); return; }
                 if (string.IsNullOrWhiteSpace(version)) return;
                 try
@@ -247,7 +246,7 @@ namespace TopuLauncher
                     Directory.CreateDirectory(path); string oldPath = _gamePath; _gamePath = path;
                     try { WriteRuntimeProfile(new RuntimeProfileSettings { Loader=loader, Version=version, RamGb=(int)ram.Value }); }
                     finally { _gamePath = oldPath; }
-                    LoadProfilesIntoSelector(); ProfileSelector.SelectedItem = GetDisplayProfileName(normalized); SetActiveProfile(GetDisplayProfileName(normalized)); RefreshLoaderUiFromProfile(); UpdateRuntimeProfileCard(); StatusText.Text = $"Created {loader} profile: {GetDisplayProfileName(normalized)}"; WriteLog($"Created {loader} profile {normalized} for Minecraft {version} with {(int)ram.Value}GB RAM."); dialog.Close();
+                    LoadProfilesIntoSelector(); ProfileSelector.SelectedItem = GetDisplayProfileName(normalized); SetActiveProfile(GetDisplayProfileName(normalized)); RefreshLoaderUiFromProfile(); StatusText.Text = $"Created {loader} profile: {GetDisplayProfileName(normalized)}"; WriteLog($"Created {loader} profile {normalized} for Minecraft {version} with {(int)ram.Value}GB RAM."); dialog.Close();
                 }
                 catch (Exception ex) { WriteException("CUSTOM PROFILE CREATE ERROR", ex); MessageBox.Show(dialog,ex.Message,"Profile Error",MessageBoxButton.OK,MessageBoxImage.Error); }
             };
@@ -299,7 +298,7 @@ namespace TopuLauncher
                 string loaderVersionName;
                 if(loaderType.Equals("Forge",StringComparison.OrdinalIgnoreCase))
                 {
-                    StatusText.Text=$"Finding stable Forge Loader for {minecraftVersion}..."; ForgeInstaller forge=new ForgeInstaller(launcher,Http); IEnumerable<ForgeVersion> versions=await forge.GetForgeVersions(minecraftVersion); string? recommendedForge=await GetStableForgeLoaderVersionAsync(minecraftVersion,CancellationToken.None); ForgeVersion? selected=null; if(!string.IsNullOrWhiteSpace(recommendedForge)) selected=versions.FirstOrDefault(v=>v.ForgeVersionName.Equals(recommendedForge,StringComparison.OrdinalIgnoreCase)||v.ForgeVersionName.EndsWith(recommendedForge,StringComparison.OrdinalIgnoreCase)); selected??=versions.FirstOrDefault(); if(selected==null) throw new InvalidOperationException($"No Forge build was found for Minecraft {minecraftVersion}."); WriteLog($"Selected stable Forge build: {selected.ForgeVersionName}"); loaderVersionName=await forge.Install(selected);
+                    StatusText.Text=$"Installing Forge for {minecraftVersion}..."; ForgeInstaller forge=new ForgeInstaller(launcher,Http); IEnumerable<ForgeVersion> versions=await forge.GetForgeVersions(minecraftVersion); ForgeVersion? selected=versions.FirstOrDefault(); if(selected==null) throw new InvalidOperationException($"No Forge build was found for Minecraft {minecraftVersion}."); WriteLog($"Selected Forge build: {selected.ForgeVersionName}"); loaderVersionName=await forge.Install(selected);
                 }
                 else if(loaderType.Equals("Quilt",StringComparison.OrdinalIgnoreCase)) loaderVersionName=await InstallQuiltRuntimeAsync(minecraftVersion);
                 else loaderVersionName=minecraftVersion;
@@ -315,156 +314,9 @@ namespace TopuLauncher
             finally{ LaunchBtn.IsEnabled=true; }
         }
 
-        private async Task LaunchDynamicFabricAsync(RuntimeProfileSettings profile)
-        {
-            if (_minecraftProcess != null)
-            {
-                try
-                {
-                    if (!_minecraftProcess.HasExited)
-                    {
-                        MessageBox.Show("Minecraft is already running.", "Topu Client", MessageBoxButton.OK, MessageBoxImage.Information);
-                        return;
-                    }
-                }
-                catch { }
-                _minecraftProcess = null;
-            }
-
-            LaunchBtn.IsEnabled = false;
-            try
-            {
-                string minecraftVersion = profile.Version;
-                int ram = Math.Max(2048, profile.RamGb * 1024);
-
-                StartLaunchLog();
-                WriteLog("===== TOPU DYNAMIC FABRIC LAUNCH =====");
-                WriteLog($"Minecraft: {minecraftVersion}");
-                WriteLog($"Profile: {_gamePath}");
-                WriteLog($"RAM: {ram} MB");
-
-                _session = await AuthenticateSelectedAccountAsync();
-                if (_session == null)
-                    throw new InvalidOperationException("Could not create a Minecraft session.");
-
-                string javaPath = await EnsureJavaAsync(RuntimeJavaMajor("Fabric", minecraftVersion));
-                MinecraftPath minecraftPath = new MinecraftPath(_gamePath);
-                MinecraftLauncher launcher = new MinecraftLauncher(minecraftPath);
-
-                StatusText.Text = $"Installing Minecraft {minecraftVersion}...";
-                await launcher.InstallAsync(minecraftVersion, CancellationToken.None);
-
-                StatusText.Text = $"Finding stable Fabric Loader for {minecraftVersion}...";
-                string loaderVersion = await GetStableFabricLoaderVersionAsync(minecraftVersion, CancellationToken.None);
-                WriteLog($"Selected stable Fabric Loader: {loaderVersion}");
-
-                string profileUrl = "https://meta.fabricmc.net/v2/versions/loader/" +
-                    Uri.EscapeDataString(minecraftVersion) + "/" +
-                    Uri.EscapeDataString(loaderVersion) + "/profile/json";
-
-                using HttpResponseMessage response = await DynamicVersionHttp.GetAsync(profileUrl);
-                response.EnsureSuccessStatusCode();
-                string profileJson = await response.Content.ReadAsStringAsync();
-
-                using JsonDocument profileDoc = JsonDocument.Parse(profileJson);
-                string versionId = profileDoc.RootElement.TryGetProperty("id", out JsonElement idElement) &&
-                    !string.IsNullOrWhiteSpace(idElement.GetString())
-                    ? idElement.GetString()!
-                    : $"fabric-loader-{loaderVersion}-{minecraftVersion}";
-
-                string versionDirectory = Path.Combine(_gamePath, "versions", versionId);
-                Directory.CreateDirectory(versionDirectory);
-                await File.WriteAllTextAsync(Path.Combine(versionDirectory, versionId + ".json"), profileJson);
-
-                if (profileDoc.RootElement.TryGetProperty("libraries", out JsonElement libraries) &&
-                    libraries.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (JsonElement library in libraries.EnumerateArray())
-                    {
-                        if (!library.TryGetProperty("name", out JsonElement nameElement))
-                            continue;
-
-                        string coordinate = nameElement.GetString() ?? "";
-                        if (string.IsNullOrWhiteSpace(coordinate))
-                            continue;
-
-                        string? url = null;
-                        if (library.TryGetProperty("downloads", out JsonElement downloads) &&
-                            downloads.TryGetProperty("artifact", out JsonElement artifact) &&
-                            artifact.TryGetProperty("url", out JsonElement artifactUrl))
-                            url = artifactUrl.GetString();
-
-                        if (string.IsNullOrWhiteSpace(url) &&
-                            library.TryGetProperty("url", out JsonElement libraryUrl))
-                            url = libraryUrl.GetString();
-
-                        string relative = MavenRelativePath(coordinate);
-                        if (string.IsNullOrWhiteSpace(url))
-                            url = "https://maven.fabricmc.net/" + relative.Replace('\\', '/');
-
-                        string destination = Path.Combine(_gamePath, "libraries", relative);
-                        if (!File.Exists(destination) || new FileInfo(destination).Length == 0)
-                            await DownloadFileAsync(url, destination);
-                    }
-                }
-
-                await InstallUniversalPerformancePackAsync("Fabric", minecraftVersion);
-                await launcher.InstallAsync(versionId, CancellationToken.None);
-
-                MLaunchOption options = new MLaunchOption
-                {
-                    Session = _session,
-                    MaximumRamMb = ram,
-                    MinimumRamMb = Math.Min(1024, ram),
-                    JavaPath = javaPath,
-                    GameLauncherName = "Topu Client",
-                    GameLauncherVersion = "1.0.0"
-                };
-
-                StatusText.Text = $"Building Fabric {minecraftVersion} process...";
-                Process process = await launcher.BuildProcessAsync(versionId, options, CancellationToken.None);
-                if (process == null)
-                    throw new InvalidOperationException("CmlLib returned a null Minecraft process.");
-
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-                process.OutputDataReceived += Minecraft_OutputDataReceived;
-                process.ErrorDataReceived += Minecraft_ErrorDataReceived;
-
-                WriteLog($"Loader version: {loaderVersion}");
-                WriteLog($"Version profile: {versionId}");
-                WriteLog($"Executable: {process.StartInfo.FileName}");
-                WriteLog($"Arguments: {process.StartInfo.Arguments}");
-                WriteDebugFile(process, javaPath, minecraftVersion, versionId, ram);
-
-                StatusText.Text = $"Starting Fabric {minecraftVersion}...";
-                if (!process.Start())
-                    throw new InvalidOperationException("Windows failed to start Minecraft.");
-
-                _minecraftProcess = process;
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                StatusText.Text = $"Topu Client running as {_session.Username}";
-                _ = MonitorMinecraftAsync(process);
-            }
-            catch (Exception ex)
-            {
-                StatusText.Text = "Launch failed.";
-                WriteException("TOPU DYNAMIC FABRIC LAUNCH ERROR", ex);
-                MessageBox.Show("Minecraft failed to launch.\n\n" + ex.Message + "\n\nLog:\n" + _logPath,
-                    "Topu Client", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                LaunchBtn.IsEnabled = true;
-            }
-        }
-
         private async Task<string> InstallQuiltRuntimeAsync(string minecraftVersion)
         {
-            string loaderVersion=await GetStableQuiltLoaderVersionAsync(minecraftVersion, CancellationToken.None);
+            string versionsUrl="https://meta.quiltmc.org/v3/versions/loader/"+Uri.EscapeDataString(minecraftVersion); using HttpResponseMessage versionsResponse=await Http.GetAsync(versionsUrl); versionsResponse.EnsureSuccessStatusCode(); string versionsJson=await versionsResponse.Content.ReadAsStringAsync(); using JsonDocument versionsDoc=JsonDocument.Parse(versionsJson); JsonElement root=versionsDoc.RootElement; if(root.ValueKind!=JsonValueKind.Array||root.GetArrayLength()==0) throw new InvalidOperationException($"No Quilt Loader version was found for Minecraft {minecraftVersion}."); JsonElement selected=root[0]; string loaderVersion=selected.GetProperty("loader").GetProperty("version").GetString()??throw new InvalidOperationException("Quilt Loader version was missing.");
             string profileUrl="https://meta.quiltmc.org/v3/versions/loader/"+Uri.EscapeDataString(minecraftVersion)+"/"+Uri.EscapeDataString(loaderVersion)+"/profile/json"; using HttpResponseMessage profileResponse=await Http.GetAsync(profileUrl); profileResponse.EnsureSuccessStatusCode(); string profileJson=await profileResponse.Content.ReadAsStringAsync(); using JsonDocument profileDoc=JsonDocument.Parse(profileJson); string id=profileDoc.RootElement.TryGetProperty("id",out JsonElement idElement)?idElement.GetString()??$"quilt-loader-{loaderVersion}-{minecraftVersion}":$"quilt-loader-{loaderVersion}-{minecraftVersion}";
             using(JsonDocument sourceDoc=JsonDocument.Parse(profileJson)){ Dictionary<string,JsonElement> profile=new Dictionary<string,JsonElement>(); foreach(JsonProperty property in sourceDoc.RootElement.EnumerateObject()) profile[property.Name]=property.Value.Clone(); profile["inheritsFrom"]=JsonDocument.Parse(JsonSerializer.Serialize(minecraftVersion)).RootElement.Clone(); profile["jar"]=JsonDocument.Parse(JsonSerializer.Serialize(minecraftVersion)).RootElement.Clone(); profileJson=JsonSerializer.Serialize(profile,new JsonSerializerOptions{WriteIndented=true}); }
             string versionDirectory=Path.Combine(_gamePath,"versions",id); Directory.CreateDirectory(versionDirectory); string jsonPath=Path.Combine(versionDirectory,id+".json"); await File.WriteAllTextAsync(jsonPath,profileJson);

@@ -81,7 +81,6 @@ private static readonly HttpClient Http = CreateHttpClient();
 
     private sealed class ProfileSettings
     {
-        public string Loader { get; set; } = "Vanilla";
         public string Version { get; set; } = DefaultVersion;
         public int RamGb { get; set; } = 4;
     }
@@ -1815,8 +1814,10 @@ private static readonly HttpClient Http = CreateHttpClient();
             NormalizeProfileName(
                 profileName);
 
-        SetActiveProfile(
-            profileName);
+        // Do NOT call SetActiveProfile() here.
+        // SetActiveProfile() reloads topu-profile.json and would overwrite
+        // the version/RAM values the user just selected in the UI.
+        // _gamePath already points to the active profile directory.
 
         string version =
             GetSelectedVersion();
@@ -4988,57 +4989,33 @@ private static readonly HttpClient Http = CreateHttpClient();
     }
 
     private void UpdateLaunchSummary()
+    {
+        try
         {
-            try
+            if (LaunchProfileLabel != null)
             {
-                string profile = GetActiveProfileName();
-                string loader = _loaderBox?.SelectedItem?.ToString() ?? "Vanilla";
-                string version = GetSelectedVersion();
-                int ram = Math.Clamp((int)RamSlider.Value, 2, 12);
-
-                if (LaunchProfileLabel != null)
-                    LaunchProfileLabel.Text = profile;
-
-                if (LaunchLoaderLabel != null)
-                {
-                    try
-                    {
-                        string path = GetProfileSettingsPath(_gamePath);
-                        if (File.Exists(path))
-                        {
-                            ProfileSettings settings =
-                                JsonSerializer.Deserialize<ProfileSettings>(File.ReadAllText(path))
-                                ?? new ProfileSettings();
-
-                            if (!string.IsNullOrWhiteSpace(settings.Loader))
-                                loader = settings.Loader;
-                        }
-                    }
-                    catch
-                    {
-                        // Keep the UI usable when an older profile file is malformed.
-                    }
-
-                    LaunchLoaderLabel.Text = loader;
-                }
-
-                if (LaunchVersionLabel != null)
-                    LaunchVersionLabel.Text = version;
-
-                if (LaunchRamLabel != null)
-                    LaunchRamLabel.Text = $"{ram}GB RAM";
-
-                if (SelectedProfileLabel != null)
-                    SelectedProfileLabel.Text =
-                        $"● {profile}   •   {loader} {version}   •   {ram}GB RAM";
-
-                UpdateAccountCard();
+                LaunchProfileLabel.Text =
+                    GetActiveProfileName();
             }
-            catch
+
+            if (LaunchVersionLabel != null)
             {
-                // Summary updates must never prevent the launcher window from loading.
+                LaunchVersionLabel.Text =
+                    GetSelectedVersion();
             }
+
+            if (LaunchRamLabel != null)
+            {
+                LaunchRamLabel.Text =
+                    $"{(int)RamSlider.Value}GB RAM";
+            }
+
+            UpdateAccountCard();
         }
+        catch
+        {
+        }
+    }
 }
 
 
