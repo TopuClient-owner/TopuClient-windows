@@ -26,6 +26,14 @@ namespace TopuLauncher
             "embeddium", "ferrite-core", "modernfix", "immediatelyfast", "dynamic-fps"
         };
 
+        // Quilt gets Quilt-compatible projects only. Do not reuse the
+        // Fabric performance list for Quilt because that can select a
+        // Fabric build with incompatible Fabric Loader/API requirements.
+        private static readonly string[] UniversalPerformanceQuilt =
+        {
+            "qsl", "sodium", "lithium", "dynamic-fps"
+        };
+
         private CancellationTokenSource? _universalVersionCts;
         private CancellationTokenSource? _universalPerformanceCts;
         private bool _universalLoaderHooksInstalled;
@@ -258,9 +266,19 @@ namespace TopuLauncher
 
             try
             {
-                string[] projects = loader.Equals("Forge", StringComparison.OrdinalIgnoreCase)
-                    ? UniversalPerformanceForge
-                    : UniversalPerformanceFabricFamily;
+                string[] projects;
+                if (loader.Equals("Forge", StringComparison.OrdinalIgnoreCase))
+                {
+                    projects = UniversalPerformanceForge;
+                }
+                else if (loader.Equals("Quilt", StringComparison.OrdinalIgnoreCase))
+                {
+                    projects = UniversalPerformanceQuilt;
+                }
+                else
+                {
+                    projects = UniversalPerformanceFabricFamily;
+                }
 
                 string modsPath = Path.Combine(_gamePath, "mods");
                 Directory.CreateDirectory(modsPath);
@@ -284,21 +302,44 @@ namespace TopuLauncher
 
         private void RemoveObsoletePerformanceMods(string modsPath, string loader)
         {
-            string[] obsolete =
+            // Performance mods are synchronized per loader/version. Remove
+            // previously managed builds first so a 1.20.6 jar can never be
+            // left behind when the profile is changed to 1.15 (or another
+            // Minecraft version).
+            string[] managed =
             {
-                "sodium-extra", "sodium_extra", "krypton", "fabric-api"
+                "fabric-api",
+                "quilted-fabric-api",
+                "qfapi",
+                "qsl",
+                "sodium",
+                "lithium",
+                "dynamic-fps",
+                "ferrite-core",
+                "ferritecore",
+                "immediatelyfast",
+                "embeddium",
+                "modernfix",
+                "krypton",
+                "sodium-extra",
+                "sodium_extra"
             };
-
-            if (loader.Equals("Fabric", StringComparison.OrdinalIgnoreCase))
-                return;
 
             foreach (string file in Directory.EnumerateFiles(modsPath, "*.jar"))
             {
-                string name = Path.GetFileName(file).ToLowerInvariant();
-                if (obsolete.Any(x => name.Contains(x, StringComparison.OrdinalIgnoreCase)))
+                string name = Path.GetFileName(file);
+
+                if (!managed.Any(x => name.Contains(x, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                try
                 {
-                    try { File.Delete(file); WriteLog($"Removed incompatible performance mod: {Path.GetFileName(file)}"); }
-                    catch { }
+                    File.Delete(file);
+                    WriteLog($"Removed old managed performance mod: {name}");
+                }
+                catch (Exception ex)
+                {
+                    WriteLog($"Could not remove old managed performance mod {name}: {ex.Message}");
                 }
             }
         }
@@ -311,8 +352,13 @@ namespace TopuLauncher
             CancellationToken token)
         {
             string modrinthLoader = loader.ToLowerInvariant();
-            string query = "?loaders=" + Uri.EscapeDataString(JsonSerializer.Serialize(new[] { modrinthLoader })) +
-                           "&game_versions=" + Uri.EscapeDataString(JsonSerializer.Serialize(new[] { minecraftVersion })) +
+
+            // Modrinth must be queried with both the exact loader and exact
+            // Minecraft version. Never fall back to another game version.
+            string query = "?loaders=" +
+                           Uri.EscapeDataString(JsonSerializer.Serialize(new[] { modrinthLoader })) +
+                           "&game_versions=" +
+                           Uri.EscapeDataString(JsonSerializer.Serialize(new[] { minecraftVersion })) +
                            "&version_type=release&include_changelog=false";
 
             using HttpResponseMessage response = await Http.GetAsync(
