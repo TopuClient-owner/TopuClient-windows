@@ -300,7 +300,14 @@ namespace TopuLauncher
                 {
                     StatusText.Text=$"Installing Forge for {minecraftVersion}..."; ForgeInstaller forge=new ForgeInstaller(launcher,Http); IEnumerable<ForgeVersion> versions=await forge.GetForgeVersions(minecraftVersion); ForgeVersion? selected=versions.FirstOrDefault(); if(selected==null) throw new InvalidOperationException($"No Forge build was found for Minecraft {minecraftVersion}."); WriteLog($"Selected Forge build: {selected.ForgeVersionName}"); loaderVersionName=await forge.Install(selected);
                 }
-                else if(loaderType.Equals("Quilt",StringComparison.OrdinalIgnoreCase)) loaderVersionName=await InstallQuiltRuntimeAsync(minecraftVersion);
+                else if(loaderType.Equals("Quilt",StringComparison.OrdinalIgnoreCase))
+                {
+                    loaderVersionName=await InstallQuiltRuntimeAsync(minecraftVersion);
+                    // Synchronize Quilt-compatible mods for the exact profile
+                    // before building the process. This also removes stale
+                    // Fabric/other-version performance jars.
+                    await InstallUniversalPerformancePackAsync("Quilt", minecraftVersion);
+                }
                 else loaderVersionName=minecraftVersion;
 
                 MLaunchOption options=new MLaunchOption { Session=_session, MaximumRamMb=ram, MinimumRamMb=Math.Min(1024,ram), JavaPath=javaPath, GameLauncherName="Topu Client", GameLauncherVersion="1.0.0" };
