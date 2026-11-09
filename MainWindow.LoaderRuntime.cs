@@ -83,6 +83,22 @@ namespace TopuLauncher
         private void AddLoaderSelectorCard()
         {
             if (_loaderBox != null || TabProfiles == null) return;
+
+            // Use the selector declared in MainWindow.xaml so it is always
+            // visible and does not depend on runtime visual-tree insertion.
+            if (LoaderSelector != null)
+            {
+                _loaderBox = LoaderSelector;
+                _loaderBox.Items.Clear();
+                _loaderBox.Items.Add("Vanilla");
+                _loaderBox.Items.Add("Fabric");
+                _loaderBox.Items.Add("Forge");
+                _loaderBox.Items.Add("Quilt");
+                _loaderBox.Items.Add("NeoForge");
+                _loaderBox.SelectionChanged += LoaderBox_SelectionChanged;
+                return;
+            }
+
             _loaderBox = new ComboBox { Height = 36, HorizontalAlignment = HorizontalAlignment.Stretch, Style = FindResource("ModernComboBox") as Style };
             _loaderBox.Items.Add("Vanilla");
             _loaderBox.Items.Add("Fabric");
