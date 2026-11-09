@@ -45,7 +45,6 @@ namespace TopuLauncher
         private CancellationTokenSource? _universalVersionCts;
         private CancellationTokenSource? _universalPerformanceCts;
         private bool _universalLoaderHooksInstalled;
-        private bool _universalCreateHooksInstalled;
 
         private static readonly bool UniversalLoaderWindowHook = RegisterUniversalLoaderWindowHook();
 
