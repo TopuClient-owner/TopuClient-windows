@@ -487,7 +487,7 @@ private static readonly HttpClient Http = CreateHttpClient();
                     RamGb = 4
                 });
 
-            NewProfileInput.Clear();
+            NewProfileInput?.Clear();
 
             LoadProfilesIntoSelector();
 
@@ -590,7 +590,7 @@ private static readonly HttpClient Http = CreateHttpClient();
     {
         return Path.Combine(
             gamePath,
-            "topuclient-profile.json");
+            "topu-profile.json");
     }
 
     private void LoadProfileSettings(
@@ -924,7 +924,7 @@ private static readonly HttpClient Http = CreateHttpClient();
                                 Type = "Microsoft",
                                 Username = username,
                                 Identifier =
-                                    account.Identifier
+                                    account.Identifier ?? username
                             });
                     }
                 }
@@ -1317,7 +1317,7 @@ private static readonly HttpClient Http = CreateHttpClient();
                     Identifier =
                         GetSelectedAccountIdentifier(),
                     Username =
-                        session.Username
+                        session.Username ?? string.Empty
                 });
 
             StatusText.Text =
@@ -1577,7 +1577,7 @@ private static readonly HttpClient Http = CreateHttpClient();
             {
                 Type = "microsoft",
                 Identifier = item.Identifier,
-                Username = session.Username
+                Username = session.Username ?? item.Username
             });
 
         return session;
@@ -5041,6 +5041,29 @@ private static readonly HttpClient Http = CreateHttpClient();
         {
         }
     }
+    private ProfileSettings ReadProfileSettingsForDisplay()
+    {
+        try
+        {
+            string path = GetProfileSettingsPath(_gamePath);
+            if (File.Exists(path))
+            {
+                ProfileSettings? settings =
+                    JsonSerializer.Deserialize<ProfileSettings>(
+                        File.ReadAllText(path));
+
+                if (settings != null)
+                    return settings;
+            }
+        }
+        catch (Exception ex)
+        {
+            WriteException("PROFILE DISPLAY READ ERROR", ex);
+        }
+
+        return new ProfileSettings();
+    }
+
 }
 
 
