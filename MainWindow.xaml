@@ -233,6 +233,14 @@
 
                             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
                                 <StackPanel>
+                                    <TextBlock Text="MOD LOADER" Foreground="#626974" FontSize="9" FontWeight="Bold" Margin="0,0,0,8"/>
+                                    <ComboBox x:Name="LoaderSelector" Height="38" Style="{StaticResource Combo}"/>
+                                    <TextBlock Text="Choose Vanilla, Fabric, Forge, Quilt or NeoForge for this profile." Foreground="{StaticResource Muted}" FontSize="9" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
+                                <StackPanel>
                                     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="MODRINTH DISCOVERY" Foreground="#626974" FontSize="9" FontWeight="Bold"/><TextBlock Text="Find compatible mods for the active profile." Foreground="White" FontSize="15" FontWeight="Bold" Margin="0,4,0,0"/></StackPanel><Border Grid.Column="1" Background="#0C2118" BorderBrush="#164D34" BorderThickness="1" CornerRadius="8" Padding="9,5"><TextBlock Text="MODS + PERFORMANCE" Foreground="{StaticResource Green}" FontSize="8" FontWeight="Bold"/></Border></Grid>
                                     <Grid Margin="0,14,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="ModSearchInput" Style="{StaticResource Input}" Height="38" ToolTip="Search Modrinth"/><Button Grid.Column="1" Content="Search &amp; Add" Width="125" Height="38" Margin="9,0,0,0" Style="{StaticResource GreenButton}" Click="SearchModrinth_Click"/></Grid>
                                     <TextBlock x:Name="ModSearchStatus" Text="Search a mod and Topu will install a compatible version." Foreground="{StaticResource Muted}" FontSize="9" Margin="0,8,0,0"/>
