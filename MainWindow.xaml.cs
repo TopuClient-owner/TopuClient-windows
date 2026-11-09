@@ -5044,4 +5044,4 @@ private static readonly HttpClient Http = CreateHttpClient();
 }
 
 
-}    private ProfileSettings ReadProfileSettingsForDisplay()\n    {\n        try\n        {\n            string path = GetProfileSettingsPath(_gamePath);\n            if (File.Exists(path))\n            {\n                ProfileSettings? settings = JsonSerializer.Deserialize<ProfileSettings>(File.ReadAllText(path));\n                if (settings != null)\n                    return settings;\n            }\n        }\n        catch (Exception ex)\n        {\n            WriteException("PROFILE DISPLAY READ ERROR", ex);\n        }\n        return new ProfileSettings();\n    }\n\n
+}
