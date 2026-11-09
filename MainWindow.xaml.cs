@@ -1819,6 +1819,9 @@ private static readonly HttpClient Http = CreateHttpClient();
         // the version/RAM values the user just selected in the UI.
         // _gamePath already points to the active profile directory.
 
+        string loader =
+            _loaderBox?.SelectedItem?.ToString() ?? "Vanilla";
+
         string version =
             GetSelectedVersion();
 
@@ -1829,12 +1832,13 @@ private static readonly HttpClient Http = CreateHttpClient();
             _gamePath,
             new ProfileSettings
             {
+                Loader = loader,
                 Version = version,
                 RamGb = ram
             });
 
         SelectedProfileLabel.Text =
-            $"● {GetDisplayProfileName(normalizedProfile)}   •   Fabric {version}   •   {ram}GB RAM";
+            $"● {GetDisplayProfileName(normalizedProfile)}   •   {loader} {version}   •   {ram}GB RAM";
 
         StatusText.Text =
             $"Profile saved: {GetDisplayProfileName(normalizedProfile)}";
